@@ -45,6 +45,7 @@ jobs:
         if: matrix.platform == 'windows'
         run: |
           flutter build windows --release
+          if ($LASTEXITCODE -ne 0) { throw 'Windows build failed' }
           Copy-Item packaging/windows/register.ps1 build/windows/x64/runner/Release/
           Compress-Archive -Path build/windows/x64/runner/Release/* -DestinationPath sutoriraita-windows.zip
       - name: Build Linux

@@ -27,6 +27,9 @@ echo Building the Windows release...
 call flutter build windows --release
 if errorlevel 1 goto :failed
 
+copy /Y "%~dp0packaging\windows\register.ps1" "%~dp0build\windows\x64\runner\Release\register.ps1" >nul
+if errorlevel 1 goto :failed
+
 echo.
 echo Build complete.
 echo Output: %~dp0build\windows\x64\runner\Release

@@ -27,6 +27,9 @@ echo Building the Windows debug version...
 call flutter build windows --debug
 if errorlevel 1 goto :failed
 
+copy /Y "%~dp0packaging\windows\register.ps1" "%~dp0build\windows\x64\runner\Debug\register.ps1" >nul
+if errorlevel 1 goto :failed
+
 echo.
 echo Debug build complete.
 echo Output: %~dp0build\windows\x64\runner\Debug

@@ -154,4 +154,47 @@ void main() {
       );
     },
   );
+
+  test(
+    'corrupt ZIP checksums and exact duplicate names are rejected',
+    () async {
+      final project = await store.create(title: 'Checksums', author: '');
+      final archive = Archive();
+      final manifest = utf8.encode(project.prettyJson());
+      archive.addFile(
+        ArchiveFile('sutoriraita.json', manifest.length, manifest),
+      );
+      archive.addFile(ArchiveFile('assets/a', 1, [1]));
+      archive.addFile(ArchiveFile('assets/b', 1, [2]));
+      final valid = Uint8List.fromList(ZipEncoder().encode(archive));
+      final duplicate = Uint8List.fromList(valid);
+      final name = utf8.encode('assets/b');
+      for (var i = 0; i <= duplicate.length - name.length; i++) {
+        if (String.fromCharCodes(duplicate.sublist(i, i + name.length)) ==
+            'assets/b') {
+          duplicate[i + name.length - 1] = 'a'.codeUnitAt(0);
+        }
+      }
+      await expectLater(
+        store.openPackage(bytes: duplicate),
+        throwsFormatException,
+      );
+      final corrupt = Uint8List.fromList(valid);
+      // Central directory CRC lives 16 bytes after its signature.
+      for (var i = 0; i < corrupt.length - 20; i++) {
+        if (corrupt[i] == 0x50 &&
+            corrupt[i + 1] == 0x4b &&
+            corrupt[i + 2] == 1 &&
+            corrupt[i + 3] == 2) {
+          corrupt[i + 16] ^= 0xff;
+          break;
+        }
+      }
+      await expectLater(
+        store.openPackage(bytes: corrupt),
+        throwsFormatException,
+      );
+      expect((await store.discoverProjects()).length, 1);
+    },
+  );
 }

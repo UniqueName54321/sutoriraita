@@ -201,8 +201,16 @@ void main() {
       await Future<void>.delayed(const Duration(milliseconds: 1));
       controller.updateContent('Second edit while saving');
       final secondTimestamp = scene.updatedAt;
+      var secondSaveReturned = false;
+      final savingBeforeSwitch = controller.saveNow().then((_) {
+        secondSaveReturned = true;
+      });
+      await Future<void>.delayed(Duration.zero);
+      expect(secondSaveReturned, isFalse);
       store.releaseFirstSave.complete();
       await saving;
+      await savingBeforeSwitch;
+      expect(secondSaveReturned, isTrue);
 
       expect(secondTimestamp.isAfter(firstTimestamp), isTrue);
       expect(store.savedContents, ['First edit', 'Second edit while saving']);

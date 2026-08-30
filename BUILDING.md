@@ -1,4 +1,4 @@
-# Building and releasing v0.0.2 pre-alpha
+# Building and releasing v0.0.3 pre-alpha
 
 Use Flutter **3.47.2 stable**, Dart **3.13.2** (bundled), and the committed
 `pubspec.lock`. Run `flutter doctor -v`, `flutter pub get`, `flutter analyze`,
@@ -62,9 +62,9 @@ unverified. A production release requires completing those checks on supported
 platforms. No workflow auto-publishes a production release. Keep `pubspec.yaml`,
 README, CHANGELOG and the in-app version label aligned. Every distinct update gets
 a new application version and a monotonically increasing build number. The current
-release is `0.0.2+2` / `v0.0.2-pre-alpha`; retain the old `v0.0.1-pre-alpha` tag,
+release is `0.0.3+3` / `v0.0.3-pre-alpha`; retain the old v0.0.1 and v0.0.2 tags,
 notes and downloads unchanged. Project `formatVersion` is independent of the app
-version and remains **1**; this menu update needs no data migration.
+version and remains **1**; this update needs no native data migration.
 
 ## Required interactive checks
 
@@ -77,6 +77,12 @@ version and remains **1**; this menu update needs no data migration.
 4. Open `.sutoriraita` from the system file manager with the app stopped and running.
    Test filenames containing spaces and non-ASCII characters.
 5. Check import/export and platform-specific file permissions on real devices.
+6. With Documents/HammerProjects present, decline the startup prompt and verify no
+   copies are made. Restart, manually import, then try consenting with new folders.
+7. Import a Hammer story, edit it, export, unzip into a new HammerProjects folder,
+   and open it in Hammer. Check scene order, Unicode titles, notes, timeline and images.
+8. Export `.nov`, restore it in Novelist, and check chapters, emphasis and encyclopedia.
+   Advanced Markdown and native-only metadata intentionally do not fully transfer.
 
 SAF saves use provider streams and preserve previous changed content under
 `.recovery`; providers do not promise filesystem-style atomic renames. A failed
@@ -84,6 +90,28 @@ provider write must be treated as a save failure. Re-select folders after access
 is revoked or a provider moves them. Native folder/provider integration is not
 covered by the mocked Dart channel tests and needs the device checks above.
 
+
+## v0.0.3 transfer verification (2026-08-30)
+
+Synthetic tests cover Hammer ordering, Unicode names, TOML null handling,
+source-file preservation through native portable export, structural edits, rejected
+formats/IDs, Android content-tree reads, startup consent/decline, and Novelist backup
+structure/round trips. The supplied Hammer examples were also imported and exported
+locally with manuscript equality and byte equality for notes, timeline and images;
+the original folders were read-only test inputs and are not committed to Git.
+
+To repeat that optional check in PowerShell:
+
+```powershell
+$env:SUTORIRAITA_HAMMER_EXAMPLES = 'C:\path\to\HammerProjects'
+flutter test test/story_transfer_test.dart
+```
+
+CI uses synthetic fixtures; that local-only example test is explicitly skipped
+unless the environment variable is set. No signing credentials are needed for
+format support. iOS remains an unsigned build, not an installable IPA; Android
+uses development signing. Native file-provider and external-app interoperability
+checks remain unverified on real mobile/Apple devices.
 
 ## v0.0.2 verification record (2026-08-30)
 

@@ -1,5 +1,20 @@
 # Changelog
 
+## v0.0.3 pre-alpha — 2026-08-30
+
+- Import Hammer dataVersion-2 story folders, including Android document-tree URIs.
+- Preserve ordered Markdown scenes, root scenes, encyclopedia, author/language,
+  and source notes, timeline, images and drafts without changing the originals.
+- Detect readable desktop Documents/HammerProjects folders at startup and request
+  confirmation before importing copies. Remember skipped/imported folders; manual
+  import remains available.
+- Export Hammer story ZIP folders and Novelist `.nov` version-4 backups from a
+  compact Export story project dialog. Keep native portable export available.
+- Import Novelist version-4 backups as well as version 5; read picked files as
+  streams, preserve bold/italic spans, and give each import its own identity.
+- Increment app version/build to `0.0.3+3`; native project format remains 1.
+- Update platform download links and document transfer limits and signing requirements.
+
 ## v0.0.2 pre-alpha — 2026-08-30
 
 - Group welcome-screen actions into New project, Open and Import dropdown menus.

@@ -99,7 +99,8 @@ class SutoriraitaApp extends StatelessWidget {
 }
 
 class AppShell extends StatefulWidget {
-  const AppShell({super.key});
+  const AppShell({super.key, this.store});
+  final ProjectStore? store;
   @override
   State<AppShell> createState() => _AppShellState();
 }
@@ -108,10 +109,12 @@ class _AppShellState extends State<AppShell> {
   late final ProjectController controller;
   Timer? _documentTimer;
   bool _openingDocument = false;
+  bool _importingHammer = false;
   @override
   void initState() {
     super.initState();
-    controller = ProjectController(ProjectStore())..addListener(_refresh);
+    controller = ProjectController(widget.store ?? ProjectStore())
+      ..addListener(_refresh);
     _restoreAndListen();
   }
 
@@ -121,6 +124,7 @@ class _AppShellState extends State<AppShell> {
     for (final argument in launchArguments) {
       if (!argument.startsWith('-')) await _openExternal(path: argument);
     }
+    await _offerHammerImport();
     if (Platform.isAndroid || Platform.isIOS || Platform.isMacOS) {
       await _pollDocuments();
       if (mounted) {
@@ -129,6 +133,90 @@ class _AppShellState extends State<AppShell> {
           (_) => _pollDocuments(),
         );
       }
+    }
+  }
+
+  Future<void> _offerHammerImport() async {
+    try {
+      final paths = await controller.store.discoverHammerProjects();
+      if (paths.isEmpty || !mounted) return;
+      await WidgetsBinding.instance.endOfFrame;
+      if (!mounted) return;
+      final accept = await showDialog<bool>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          title: const Text('Import your Hammer stories?'),
+          content: SizedBox(
+            width: 440,
+            child: SingleChildScrollView(
+              child: Text(
+                'Found ${paths.length} stories in Documents/HammerProjects. '
+                'Import copies into Sutōrīraitā? Your Hammer files will not be changed.\n\n'
+                '${paths.map((p) => p.split(Platform.pathSeparator).last).join('\n')}\n\n'
+                'Skipped stories can still be imported from Import → Hammer story folder.',
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: const Text('Skip these stories'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(dialogContext, true),
+              child: const Text('Import copies'),
+            ),
+          ],
+        ),
+      );
+      if (accept == null || !mounted) return;
+      if (!accept) {
+        await controller.store.markHammerHandled(paths);
+        return;
+      }
+      setState(() => _importingHammer = true);
+      var imported = 0;
+      final failed = <String>[];
+      // Keep any current project open. Importing copies is independent of its
+      // autosave and must never replace unsaved work.
+      for (final path in paths) {
+        try {
+          await controller.store.importHammerFolder(sourcePath: path);
+          imported++;
+        } catch (error) {
+          failed.add('${path.split(Platform.pathSeparator).last}: $error');
+        }
+      }
+      final active = controller.project;
+      if (active != null) {
+        await controller.store.remember(active);
+      } else {
+        await controller.store.forgetLast();
+      }
+      if (!mounted) return;
+      setState(() => _importingHammer = false);
+      await showDialog<void>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          title: Text('Imported $imported Hammer stories'),
+          content: SingleChildScrollView(
+            child: Text(
+              failed.isEmpty
+                  ? 'Your copies are available in the project list.'
+                  : 'These stories could not be imported and can be retried:\n\n${failed.join('\n\n')}',
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('Done'),
+            ),
+          ],
+        ),
+      );
+    } catch (error) {
+      if (mounted) setState(() => _importingHammer = false);
+      if (mounted) _showDocumentError(error);
     }
   }
 
@@ -187,7 +275,7 @@ class _AppShellState extends State<AppShell> {
   }
 
   @override
-  Widget build(BuildContext context) => controller.loading
+  Widget build(BuildContext context) => controller.loading || _importingHammer
       ? const Scaffold(
           body: Center(child: CircularProgressIndicator(strokeWidth: 2)),
         )
@@ -255,6 +343,16 @@ class WelcomeScreen extends StatelessWidget {
       controller.useProject(await controller.store.importNovelistFile());
     } on ProjectCancelled {
       // The user closed the native file picker.
+    } catch (error) {
+      if (context.mounted) _showError(context, error);
+    }
+  }
+
+  Future<void> _importHammer(BuildContext context) async {
+    try {
+      controller.useProject(await controller.store.importHammerFolder());
+    } on ProjectCancelled {
+      // Native folder picker dismissed.
     } catch (error) {
       if (context.mounted) _showError(context, error);
     }
@@ -392,6 +490,11 @@ class WelcomeScreen extends StatelessWidget {
                                   icon: Icons.auto_stories_outlined,
                                   onPressed: () => _importNovelist(context),
                                 ),
+                                (
+                                  label: 'Hammer story folder',
+                                  icon: Icons.folder_copy_outlined,
+                                  onPressed: () => _importHammer(context),
+                                ),
                               ],
                             ),
                           ],
@@ -400,7 +503,7 @@ class WelcomeScreen extends StatelessWidget {
                         _ProjectLibrary(controller: controller),
                         const SizedBox(height: 46),
                         const Text(
-                          'VERSION 0.0.2  •  PRE-ALPHA',
+                          'VERSION 0.0.3  •  PRE-ALPHA',
                           style: TextStyle(
                             fontFamily: 'Segoe UI',
                             fontSize: 11,
@@ -840,7 +943,7 @@ class WorkspaceTopBar extends StatelessWidget {
               value: 'package',
               child: _MenuLabel(
                 Icons.inventory_2_outlined,
-                'Export portable package',
+                'Export story project…',
               ),
             ),
             PopupMenuDivider(),
@@ -2578,6 +2681,57 @@ Future<void> _projectAction(
     }
     if (value == 'close') {
       await controller.closeProject();
+      return;
+    }
+    if (value == 'package') {
+      final selection = await showDialog<String>(
+        context: context,
+        builder: (dialogContext) => SimpleDialog(
+          title: const Text('Export story project'),
+          children: [
+            for (final option in const [
+              (
+                'sutoriraita',
+                'Sutōrīraitā (.sutoriraita)',
+                'Complete native project backup',
+              ),
+              (
+                'hammer',
+                'Hammer story (.hammer.zip)',
+                'Unzip into HammerProjects; preserves imported notes and timeline',
+              ),
+              (
+                'novelist',
+                'Novelist story (.nov)',
+                'Chapters, scenes and encyclopedia; advanced formatting is simplified',
+              ),
+            ])
+              SimpleDialogOption(
+                onPressed: () => Navigator.pop(dialogContext, option.$1),
+                child: ListTile(
+                  title: Text(option.$2),
+                  subtitle: Text(option.$3),
+                ),
+              ),
+          ],
+        ),
+      );
+      if (selection == null) return;
+      await controller.saveNow();
+      if (controller.saveState == SaveState.error) {
+        throw StateError('Save failed. Resolve it before exporting.');
+      }
+      final project = controller.project!;
+      final path = selection == 'sutoriraita'
+          ? await controller.store.exportPackage(project)
+          : await controller.store.exportStory(
+              project,
+              hammer: selection == 'hammer',
+            );
+      if (context.mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('Exported to $path')));
+      }
       return;
     }
     if (value == 'document-export') {

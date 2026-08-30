@@ -13,6 +13,10 @@ import 'models.dart';
 import 'project_documents.dart';
 import 'genre_packs.dart';
 import 'document_exporter.dart';
+import 'hammer_format.dart';
+import 'novelist_format.dart';
+
+part 'story_transfer.dart';
 
 class ProjectStore {
   ProjectStore({Future<Directory> Function()? documentsDirectory})
@@ -976,22 +980,49 @@ class ProjectStore {
   }
 
   Future<StoryProject> importNovelistFile({String? sourcePath}) async {
-    var source = sourcePath;
-    if (source == null) {
+    Uint8List bytes;
+    if (sourcePath == null) {
       final picked = await FilePicker.pickFiles(
         dialogTitle: 'Choose a Novelist story',
-        type: FileType.custom,
-        allowedExtensions: const ['nov'],
+        type: Platform.isAndroid || Platform.isIOS
+            ? FileType.any
+            : FileType.custom,
+        allowedExtensions: Platform.isAndroid || Platform.isIOS
+            ? null
+            : const ['nov'],
       );
-      source = picked.isEmpty ? null : picked.single.path;
+      if (picked.isEmpty) throw const ProjectCancelled();
+      bytes = await _readPackageStream(picked.single.readAsByteStream());
+    } else {
+      bytes = await _readPackageStream(File(sourcePath).openRead());
     }
-    if (source == null) throw const ProjectCancelled();
 
-    final decoded = jsonDecode(await File(source).readAsString());
+    final decoded = jsonDecode(utf8.decode(bytes));
     if (decoded is! Map) {
       throw const FormatException('That file is not a valid Novelist story.');
     }
     final data = decoded.cast<String, Object?>();
+    if (data['version'] == 4) {
+      final revisions =
+          (data['revisions'] as List? ?? []).whereType<Map>().toList()..sort(
+            (a, b) => ((b['number'] as int?) ?? 0).compareTo(
+              (a['number'] as int?) ?? 0,
+            ),
+          );
+      if (revisions.isEmpty) {
+        throw const FormatException('Novelist backup contains no revisions.');
+      }
+      final latest = revisions.first;
+      data['scenes'] = latest['scenes'];
+      data['categories'] = latest['categories'];
+      data['books'] = [
+        {'title': data['title'], 'sections': latest['sections']},
+      ];
+    } else if (data['version'] != null && data['version'] != 5) {
+      throw const FormatException(
+        'Supported Novelist backups use version 4 or 5.',
+      );
+    }
     final books = (data['books'] as List<Object?>? ?? const []);
     if (books.isEmpty || books.first is! Map) {
       throw const FormatException('The Novelist story contains no book.');
@@ -1003,7 +1034,8 @@ class ProjectStore {
       throw const FormatException('The Novelist story has no title.');
     }
 
-    var author = '';
+    final extra = data['sutoriraita'] as Map? ?? {};
+    var author = extra['author'] as String? ?? '';
     final metadataSource = book['metadata'];
     if (metadataSource is String && metadataSource.isNotEmpty) {
       final metadata = jsonDecode(metadataSource);
@@ -1061,17 +1093,33 @@ class ProjectStore {
     }
 
     final project = StoryProject(
-      id: data['code'] is String && (data['code'] as String).isNotEmpty
-          ? 'novelist-${data['code']}'
-          : _uuid.v4(),
+      id: _uuid.v4(),
       title: title,
       author: author.trim(),
-      language: 'en',
+      language: extra['language'] as String? ?? 'en',
       createdAt: updatedAt,
       updatedAt: updatedAt,
       path: await _allocateProjectRoot(title),
       sections: sections,
     );
+    for (final category
+        in (data['categories'] as List? ?? []).whereType<Map>()) {
+      for (final item in (category['items'] as List? ?? []).whereType<Map>()) {
+        project.encyclopedia.add(
+          EncyclopediaEntry(
+            id: _uuid.v4(),
+            title: item['title'] as String? ?? 'Untitled',
+            type:
+                EncyclopediaType.values
+                    .where((t) => t.label == category['title'])
+                    .firstOrNull ??
+                EncyclopediaType.other,
+            content: item['synopsis'] as String? ?? '',
+            updatedAt: updatedAt,
+          ),
+        );
+      }
+    }
     await save(project);
     await remember(project);
     return project;
@@ -1114,25 +1162,53 @@ class ProjectStore {
     for (final value in document['blocks'] as List<Object?>? ?? const []) {
       if (value is! Map) continue;
       final block = value.cast<String, Object?>();
-      var text = block['text'] as String? ?? '';
-      final spans =
-          (block['spans'] as List<Object?>? ?? const [])
-              .whereType<Map>()
-              .map((value) => value.cast<String, Object?>())
-              .where((span) => span['type'] == 'italic')
-              .toList()
-            ..sort(
-              (a, b) =>
-                  (b['start'] as int? ?? 0).compareTo(a['start'] as int? ?? 0),
-            );
-      for (final span in spans) {
-        final start = span['start'] as int? ?? -1;
-        final end = span['end'] as int? ?? -1;
-        if (start < 0 || end <= start || end > text.length) continue;
-        text =
-            '${text.substring(0, start)}*${text.substring(start, end)}*'
-            '${text.substring(end)}';
+      final raw = block['text'] as String? ?? '';
+      final spans = (block['spans'] as List? ?? [])
+          .whereType<Map>()
+          .where(
+            (s) =>
+                (s['type'] == 'italic' || s['type'] == 'bold') &&
+                s['start'] is int &&
+                s['end'] is int &&
+                (s['start'] as int) >= 0 &&
+                (s['end'] as int) <= raw.length &&
+                (s['end'] as int) > (s['start'] as int),
+          )
+          .toList();
+      final embeds = (block['embeds'] as List? ?? []).whereType<Map>();
+      final output = StringBuffer();
+      var previous = <String>[];
+      for (var i = 0; i <= raw.length; i++) {
+        final styles = [
+          for (final type in ['bold', 'italic'])
+            if (spans.any(
+              (s) =>
+                  s['type'] == type &&
+                  i >= (s['start'] as int) &&
+                  i < (s['end'] as int),
+            ))
+              type,
+        ];
+        var common = 0;
+        while (common < previous.length &&
+            common < styles.length &&
+            previous[common] == styles[common]) {
+          common++;
+        }
+        for (final type in previous.skip(common).toList().reversed) {
+          output.write(type == 'bold' ? '**' : '*');
+        }
+        for (final type in styles.skip(common)) {
+          output.write(type == 'bold' ? '**' : '*');
+        }
+        previous = styles;
+        if (i == raw.length) break;
+        final embed = embeds.where((e) => e['position'] == i).firstOrNull;
+        output.write(
+          raw[i] == '\uFFFC' && embed != null ? embed['value'] ?? '' : raw[i],
+        );
       }
+      final text = output.toString();
       lines.add(text);
     }
     return lines.join('\n\n').trimRight();

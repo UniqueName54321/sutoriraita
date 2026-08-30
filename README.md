@@ -1,13 +1,13 @@
 # Sutōrīraitā
 
-**v0.0.2 pre-alpha — expect bugs.** Do not trust this program with the only copy
+**v0.0.3 pre-alpha — expect bugs.** Do not trust this program with the only copy
 of your writing. Keep independent backups. macOS and iOS are untested or rarely
 tested and are especially likely to have bugs, even when their builds compile.
 
-The dropdown menu redesign is the **v0.0.2 update**, separate from the initial
-v0.0.1 release. Existing projects remain compatible; no migration is needed.
+The **v0.0.3 update** adds Hammer story import/export, startup import consent,
+and Novelist story export. The dropdown redesign was released separately in v0.0.2. Existing projects remain compatible; no migration is needed.
 See [CHANGELOG.md](CHANGELOG.md) for the changes in each version, or
-[download v0.0.2 pre-alpha](https://github.com/UniqueName54321/sutoriraita/releases/tag/v0.0.2-pre-alpha).
+[download v0.0.3 pre-alpha](https://github.com/UniqueName54321/sutoriraita/releases/tag/v0.0.3-pre-alpha).
 
 A calm, local-first story-writing workspace targeting Windows, Android, Linux,
 macOS and iOS.
@@ -15,21 +15,21 @@ macOS and iOS.
 ## Download the app
 
 You do not need to build the app yourself. The latest published builds are
-**v0.0.2 pre-alpha**:
+**v0.0.3 pre-alpha**:
 
 <!-- Update the version and every asset link below when publishing a new release. -->
 
 | Platform | Download | Getting started |
 | --- | --- | --- |
-| Windows (64-bit) | [Download ZIP](https://github.com/UniqueName54321/sutoriraita/releases/download/v0.0.2-pre-alpha/sutoriraita-v0.0.2-pre-alpha-windows.zip) | Extract the **whole ZIP**, then run `sutoriraita.exe`. Keep its accompanying files together. |
-| macOS | [Download app ZIP](https://github.com/UniqueName54321/sutoriraita/releases/download/v0.0.2-pre-alpha/sutoriraita-v0.0.2-pre-alpha-macos.zip) | Extract and move `sutoriraita.app` to Applications. This build is unnotarized, so macOS may block it. |
-| Linux (x86-64) | [Download tar.gz](https://github.com/UniqueName54321/sutoriraita/releases/download/v0.0.2-pre-alpha/sutoriraita-v0.0.2-pre-alpha-linux.tar.gz) | Extract the full archive, then run `sutoriraita`. Run `sh install.sh` to add desktop/file-type integration. Requires GTK 3. |
-| Android | [Download APK](https://github.com/UniqueName54321/sutoriraita/releases/download/v0.0.2-pre-alpha/sutoriraita-v0.0.2-pre-alpha-android.apk) | Open the APK on your device and allow installation from that source when prompted. This is a development-signed build. |
-| iOS | [Download unsigned app ZIP](https://github.com/UniqueName54321/sutoriraita/releases/download/v0.0.2-pre-alpha/sutoriraita-v0.0.2-pre-alpha-ios-unsigned.zip) | **Not ready to install.** Apple signing and provisioning are required; there is no signed IPA or TestFlight release yet. |
+| Windows (64-bit) | [Download ZIP](https://github.com/UniqueName54321/sutoriraita/releases/download/v0.0.3-pre-alpha/sutoriraita-v0.0.3-pre-alpha-windows.zip) | Extract the **whole ZIP**, then run `sutoriraita.exe`. Keep its accompanying files together. |
+| macOS | [Download app ZIP](https://github.com/UniqueName54321/sutoriraita/releases/download/v0.0.3-pre-alpha/sutoriraita-v0.0.3-pre-alpha-macos.zip) | Extract and move `sutoriraita.app` to Applications. This build is unnotarized, so macOS may block it. |
+| Linux (x86-64) | [Download tar.gz](https://github.com/UniqueName54321/sutoriraita/releases/download/v0.0.3-pre-alpha/sutoriraita-v0.0.3-pre-alpha-linux.tar.gz) | Extract the full archive, then run `sutoriraita`. Run `sh install.sh` to add desktop/file-type integration. Requires GTK 3. |
+| Android | [Download APK](https://github.com/UniqueName54321/sutoriraita/releases/download/v0.0.3-pre-alpha/sutoriraita-v0.0.3-pre-alpha-android.apk) | Open the APK on your device and allow installation from that source when prompted. This is a development-signed build. |
+| iOS | [Download unsigned app ZIP](https://github.com/UniqueName54321/sutoriraita/releases/download/v0.0.3-pre-alpha/sutoriraita-v0.0.3-pre-alpha-ios-unsigned.zip) | **Not ready to install.** Apple signing and provisioning are required; there is no signed IPA or TestFlight release yet. |
 
 Downloads currently require a GitHub account with access to this **private
-repository**. See the [release notes](https://github.com/UniqueName54321/sutoriraita/releases/tag/v0.0.2-pre-alpha)
-and [SHA-256 checksums](https://github.com/UniqueName54321/sutoriraita/releases/download/v0.0.2-pre-alpha/SHA256SUMS).
+repository**. See the [release notes](https://github.com/UniqueName54321/sutoriraita/releases/tag/v0.0.3-pre-alpha)
+and [SHA-256 checksums](https://github.com/UniqueName54321/sutoriraita/releases/download/v0.0.3-pre-alpha/SHA256SUMS).
 
 **Android upgrades:** development signing keys can differ between builds, preventing
 an in-place upgrade. Back up your projects before uninstalling an existing version:
@@ -49,7 +49,7 @@ copies, Markdown-folder import, and Markdown, plain-text, and portable exports.
 
 The welcome screen groups actions into three compact dropdowns: **New project**
 (blank or example), **Open** (packed project or folder), and **Import** (Markdown
-or Novelist). Additional formats belong inside these menus, not in new buttons.
+Novelist, or Hammer). Additional formats belong inside these menus, not in new buttons.
 
 The startup screen scans the managed library and lists every valid project.
 App settings choose whether launch opens that project list or resumes the most
@@ -67,7 +67,7 @@ original snapshot. Opening the file externally does the same. Windows/Linux
 bundles include registration scripts; see [BUILDING.md](BUILDING.md).
 
 The folder is always the live project. A `.sutoriraita` file is a ZIP-backed
-portable snapshot created only when the user chooses **Export portable package**;
+portable snapshot created only when the user chooses **Export story project → Sutōrīraitā**;
 autosave never rewrites that archive. Portable snapshots contain only canonical
 project data: the manifest and supported `scenes`, `encyclopedia`, `notes`,
 `research`, and `assets` directories. Recovery data, caches, temporary files,
@@ -79,6 +79,49 @@ folders, scene organisation, Markdown, autosave, recovery, import, and export.
 It is copied into the managed library as a normal editable `— Copy`; the
 canonical source and its compatibility metadata live conspicuously under
 `assets/example_project/` and are exercised by `example_project_test.dart`.
+
+## Hammer and Novelist stories (v0.0.3)
+
+Use **Import → Hammer story folder** and select the individual story folder
+containing `project.toml` and `scenes`, not its parent `HammerProjects` folder.
+The import creates a separate editable copy. Android uses its system document-tree
+picker; it never treats a `content://` URI as a filesystem path.
+
+On desktop platforms where Documents is readable, startup detects stories under
+`Documents/HammerProjects` and asks before importing anything. **Import copies**
+imports the detected stories; **Skip these stories** remembers the decision.
+Manual import remains available. Newly discovered folders can trigger a later
+prompt. Failed imports can be retried. There is no background synchronization.
+Android/iOS sandboxes do not permit automatic discovery of another app's files;
+sandboxed macOS builds also require access to Documents.
+
+In a project, choose **⋯ → Export story project…**:
+
+| Format | What it contains / how to use it |
+| --- | --- |
+| Sutōrīraitā (`.sutoriraita`) | Complete native snapshot, including retained Hammer source data. Recommended for backups. |
+| Hammer (`.hammer.zip`) | Extract the story folder inside into Hammer's `HammerProjects` directory, using a new name if a folder already exists. Includes current Markdown scenes, encyclopedia entries, author/language, and retained Hammer notes, timeline, images and drafts. |
+| Novelist (`.nov`) | A version-4 Novelist story backup with chapters, scenes, bold/italic spans, and encyclopedia categories/items. Import through Novelist's backup/restore flow; it is not a renamed manuscript file. |
+
+Hammer support targets **dataVersion 2**, as used by the supplied examples.
+Unchanged hierarchy and numeric scene IDs are retained; structural edits flatten
+nested groups into the current chapter order. Empty source groups are not represented
+in the editor. Names containing Hammer's reserved `~` delimiter are sanitized.
+Notes, timeline and images are preserved but do not yet have editing UIs here.
+The original imported files are kept in `assets/hammer-source.json` and travel in
+native project backups: this snapshot can still contain text subsequently deleted
+from the working manuscript. Hammer exports use current scenes and entries and
+clear server association information. Always extract into a **new** folder;
+merging into an existing Hammer folder can leave stale scenes behind.
+
+Novelist import accepts version 4 and 5, reading the latest revision for version 4
+and the first book for version 5. Export simplifies headings, lists, links, tables
+and other advanced Markdown to text; embedded images are not transferred. Native
+relations, schema/custom fields, Hammer notes/timeline, and history are not mapped
+into Novelist. Author/language are retained in optional Sutōrīraitā metadata; the
+author also appears in the story description. Keep a native backup for a full copy.
+Direct interoperability in Hammer and Novelist, especially on mobile, still needs
+interactive testing. Keep the originals until you have checked the result.
 
 ## Run
 

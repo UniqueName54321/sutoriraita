@@ -27,10 +27,6 @@ You do not need to build the app yourself. The latest published builds are
 | Android | [Download APK](https://github.com/UniqueName54321/sutoriraita/releases/download/v0.0.3-pre-alpha/sutoriraita-v0.0.3-pre-alpha-android.apk) | Open the APK on your device and allow installation from that source when prompted. This is a development-signed build. |
 | iOS | [Download unsigned app ZIP](https://github.com/UniqueName54321/sutoriraita/releases/download/v0.0.3-pre-alpha/sutoriraita-v0.0.3-pre-alpha-ios-unsigned.zip) | **Not ready to install.** Apple signing and provisioning are required; there is no signed IPA or TestFlight release yet. |
 
-Downloads currently require a GitHub account with access to this **private
-repository**. See the [release notes](https://github.com/UniqueName54321/sutoriraita/releases/tag/v0.0.3-pre-alpha)
-and [SHA-256 checksums](https://github.com/UniqueName54321/sutoriraita/releases/download/v0.0.3-pre-alpha/SHA256SUMS).
-
 **Android upgrades:** development signing keys can differ between builds, preventing
 an in-place upgrade. Back up your projects before uninstalling an existing version:
 uninstalling removes its app-private project library.

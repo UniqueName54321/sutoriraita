@@ -48,7 +48,7 @@ encyclopedia, deterministic entity suggestions, aggressive autosave, recovery
 copies, Markdown-folder import, and Markdown, plain-text, and portable exports.
 
 The welcome screen groups actions into three compact dropdowns: **New project**
-(blank or example), **Open** (packed project or folder), and **Import** (Markdown
+(blank or example), **Open** (packed project or folder), and **Import** (Markdown,
 Novelist, or Hammer). Additional formats belong inside these menus, not in new buttons.
 
 The startup screen scans the managed library and lists every valid project.

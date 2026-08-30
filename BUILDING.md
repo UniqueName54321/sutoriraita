@@ -93,8 +93,24 @@ covered by the mocked Dart channel tests and needs the device checks above.
 
 ## v0.0.3 transfer verification (2026-08-30)
 
+[CI run 33298451787](https://github.com/UniqueName54321/sutoriraita/actions/runs/33298451787)
+passed analysis, 39 tests, and release builds on Windows, macOS, Linux, Android
+and unsigned iOS. Final application commit:
+`c8b0d8546bf6a9148ea0b28194c2608d4eae6082`. Release assets come from this run;
+subsequent release-preparation commits change documentation only.
+Local analysis passed and **40 tests passed** with the supplied Hammer examples
+enabled (CI runs 39 tests and explicitly skips that local-only check).
+Windows and Android release builds succeeded locally. Windows reports `0.0.3+3`;
+Android's APK reports versionName `0.0.3`, versionCode `3`.
+Downloaded macOS and iOS bundles report version `0.0.3`, build `3`, and retain
+native document registration. The iOS Runner app has neither an app signature
+nor provisioning profile. Downloaded Windows/Linux bundles include their
+executables, runtimes and document-registration files/scripts.
+
+
 Synthetic tests cover Hammer ordering, Unicode names, TOML null handling,
-source-file preservation through native portable export, structural edits, rejected
+source-file preservation through native portable export, safe Hammer ZIP import,
+empty-story exports, structural edits, rejected
 formats/IDs, Android content-tree reads, startup consent/decline, and Novelist backup
 structure/round trips. The supplied Hammer examples were also imported and exported
 locally with manuscript equality and byte equality for notes, timeline and images;
@@ -111,7 +127,9 @@ CI uses synthetic fixtures; that local-only example test is explicitly skipped
 unless the environment variable is set. No signing credentials are needed for
 format support. iOS remains an unsigned build, not an installable IPA; Android
 uses development signing. Native file-provider and external-app interoperability
-checks remain unverified on real mobile/Apple devices.
+checks remain unverified on real mobile/Apple devices. Hammer folder import is
+not offered on iOS because the current picker does not retain the security scope;
+use its ZIP import route instead.
 
 ## v0.0.2 verification record (2026-08-30)
 

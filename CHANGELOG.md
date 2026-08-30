@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- Group welcome-screen actions into New project, Open and Import dropdown menus.
+  All existing actions remain available; future formats can be added without
+  expanding the button row.
+
 ## v0.0.1 pre-alpha
 
 Initial pre-alpha release. Expect bugs and keep independent backups of your work.

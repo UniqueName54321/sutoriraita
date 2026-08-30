@@ -12,6 +12,7 @@ import 'genre_packs.dart';
 import 'internal_links.dart';
 import 'models.dart';
 import 'project_controller.dart';
+import 'project_action_menu.dart';
 import 'project_store.dart';
 import 'project_documents.dart';
 import 'proofreading.dart';
@@ -344,50 +345,54 @@ class WelcomeScreen extends StatelessWidget {
                           spacing: 12,
                           runSpacing: 12,
                           children: [
-                            FilledButton.icon(
-                              onPressed: () => _create(context),
-                              icon: const Icon(Icons.add_rounded),
-                              label: const Text('New project'),
-                              style: FilledButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 22,
-                                  vertical: 17,
+                            ProjectActionMenu(
+                              label: 'New project',
+                              icon: Icons.add_rounded,
+                              primary: true,
+                              entries: [
+                                (
+                                  label: 'Blank project',
+                                  icon: Icons.note_add_outlined,
+                                  onPressed: () => _create(context),
                                 ),
-                              ),
-                            ),
-                            OutlinedButton.icon(
-                              onPressed: () => _openPackage(context),
-                              icon: const Icon(Icons.file_open_outlined),
-                              label: const Text('Open project'),
-                            ),
-                            OutlinedButton.icon(
-                              onPressed: () => _open(context),
-                              icon: const Icon(Icons.folder_open_outlined),
-                              label: const Text('Open folder'),
-                              style: OutlinedButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 22,
-                                  vertical: 17,
+                                (
+                                  label: 'From example story',
+                                  icon: Icons.menu_book_outlined,
+                                  onPressed: () => _openExample(context),
                                 ),
-                              ),
+                              ],
                             ),
-                            TextButton.icon(
-                              onPressed: () => _import(context),
-                              icon: const Icon(Icons.file_download_outlined),
-                              label: const Text('Import Markdown'),
+                            ProjectActionMenu(
+                              label: 'Open',
+                              icon: Icons.folder_open_outlined,
+                              entries: [
+                                (
+                                  label: 'Packed project (.sutoriraita)',
+                                  icon: Icons.file_open_outlined,
+                                  onPressed: () => _openPackage(context),
+                                ),
+                                (
+                                  label: 'Project folder',
+                                  icon: Icons.folder_open_outlined,
+                                  onPressed: () => _open(context),
+                                ),
+                              ],
                             ),
-                            TextButton.icon(
-                              onPressed: () => _importNovelist(context),
-                              icon: const Icon(Icons.auto_stories_outlined),
-                              label: const Text('Import Novelist (.nov)'),
-                            ),
-                            Tooltip(
-                              message: 'Creates an editable copy in your project library',
-                              child: FilledButton.tonalIcon(
-                                onPressed: () => _openExample(context),
-                                icon: const Icon(Icons.menu_book_outlined),
-                                label: const Text('Explore example'),
-                              ),
+                            ProjectActionMenu(
+                              label: 'Import',
+                              icon: Icons.file_download_outlined,
+                              entries: [
+                                (
+                                  label: 'Markdown folder',
+                                  icon: Icons.description_outlined,
+                                  onPressed: () => _import(context),
+                                ),
+                                (
+                                  label: 'Novelist story (.nov)',
+                                  icon: Icons.auto_stories_outlined,
+                                  onPressed: () => _importNovelist(context),
+                                ),
+                              ],
                             ),
                           ],
                         ),

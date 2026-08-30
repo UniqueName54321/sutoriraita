@@ -14,17 +14,21 @@ and scene organisation, CommonMark writing and rendered viewing, a typed
 encyclopedia, deterministic entity suggestions, aggressive autosave, recovery
 copies, Markdown-folder import, and Markdown, plain-text, and portable exports.
 
+The welcome screen groups actions into three compact dropdowns: **New project**
+(blank or example), **Open** (packed project or folder), and **Import** (Markdown
+or Novelist). Additional formats belong inside these menus, not in new buttons.
+
 The startup screen scans the managed library and lists every valid project.
 App settings choose whether launch opens that project list or resumes the most
 recent project. Entity suggestions are deterministic and local: characters,
 locations, and groups are suggested by default; experimental object and event
 detection is opt-in. Suggestions never use AI or send manuscript text away.
 
-**Open folder** opens an existing folder containing `sutoriraita.json`. On Android,
+**Open → Project folder** opens an existing folder containing `sutoriraita.json`. On Android,
 it uses the Storage Access Framework and remembers granted access; saves go back
 to the selected document provider without converting its content URI to a path.
 
-**Open project** selects a packed `.sutoriraita` file with the system picker.
+**Open → Packed project (.sutoriraita)** selects a packed `.sutoriraita` file with the system picker.
 Opening a package extracts a new editable library copy; it never modifies the
 original snapshot. Opening the file externally does the same. Windows/Linux
 bundles include registration scripts; see [BUILDING.md](BUILDING.md).

@@ -34,7 +34,7 @@ class MainActivity : FlutterActivity() {
                         val path = call.argument<String>("path") ?: ""
                         val value: Any? = when (call.method) {
                             "read" -> resolve(root!!, path, false)?.let { uri ->
-                                contentResolver.openInputStream(uri)?.use { it.readBytes() }
+                                contentResolver.openInputStream(uri)?.use { readLimited(it) }
                             }
                             "write" -> {
                                 val uri = resolve(root!!, path, true)!!
@@ -50,7 +50,7 @@ class MainActivity : FlutterActivity() {
                             }
                             "nextDocument" -> incoming.poll()?.let { uri ->
                                 contentResolver.openInputStream(uri)!!.use {
-                                    val bytes = it.readBytes()
+                                    val bytes = readLimited(it)
                                     if (bytes.size > 128 * 1024 * 1024) error("Project exceeds 128 MiB")
                                     bytes
                                 }
@@ -85,6 +85,18 @@ class MainActivity : FlutterActivity() {
             contentResolver.takePersistableUriPermission(uri, flags)
             result.success(uri.toString())
         } catch (error: Exception) { result.error("permission", error.message, null) }
+    }
+
+    private fun readLimited(input: java.io.InputStream): ByteArray {
+        val output = java.io.ByteArrayOutputStream()
+        val buffer = ByteArray(65536)
+        while (true) {
+            val count = input.read(buffer)
+            if (count < 0) break
+            require(output.size().toLong() + count <= 128L * 1024 * 1024) { "Document exceeds 128 MiB" }
+            output.write(buffer, 0, count)
+        }
+        return output.toByteArray()
     }
 
     private fun children(tree: Uri, parent: Uri): List<Triple<String, Uri, Boolean>> {

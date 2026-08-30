@@ -1,7 +1,8 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data' show BytesBuilder;
 
-import 'package:archive/archive.dart';
+import 'package:archive/archive.dart' hide ZLibDecoder;
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
@@ -487,8 +488,9 @@ class ProjectStore {
     }
     for (final path in paths) {
       final bytes = await ProjectDocuments.read(root, path);
-      if (bytes != null)
+      if (bytes != null) {
         archive.addFile(ArchiveFile(path, bytes.length, bytes));
+      }
     }
     return Uint8List.fromList(ZipEncoder().encode(archive));
   }
@@ -509,29 +511,46 @@ class ProjectStore {
             : ['sutoriraita'],
       );
       if (picked.isEmpty) throw const ProjectCancelled();
-      bytes = await picked.single.readAsBytes();
+      bytes = await _readPackageStream(picked.single.readAsByteStream());
       sourcePath = picked.single.path;
     }
-    bytes ??= await File(sourcePath!).readAsBytes();
+    bytes ??= await _readPackageStream(File(sourcePath!).openRead());
     if (bytes.length > 128 * 1024 * 1024) {
       throw const FormatException('Packed project exceeds the 128 MiB limit.');
     }
-    final archive = ZipDecoder().decodeBytes(bytes, verify: true);
-    final files = <String, ArchiveFile>{};
+    final directory = ZipDirectory()..read(InputMemoryStream(bytes));
+    final files = <String, ZipFileHeader>{};
     var total = 0;
-    for (final file in archive) {
-      final path = file.name;
+    for (final file in directory.fileHeaders) {
+      final path = file.filename;
       final parts = path.split('/');
       if (path.startsWith('/') ||
           path.contains('\\') ||
           path.contains(':') ||
           path.contains('\u0000') ||
           parts.any((p) => p == '..' || p == '.') ||
-          file.isSymbolicLink) {
+          ((file.externalFileAttributes >> 16) & 0xf000) == 0xa000) {
         throw const FormatException('Unsafe path in packed project.');
       }
-      if (!file.isFile) continue;
-      total += file.size;
+      if (path.endsWith('/')) continue;
+      if (parts.any(
+        (p) =>
+            p.isEmpty ||
+            p.endsWith('.') ||
+            p.endsWith(' ') ||
+            RegExp(
+              r'^(con|prn|aux|nul|com[1-9]|lpt[1-9])(?:\.|$)',
+              caseSensitive: false,
+            ).hasMatch(p),
+      )) {
+        throw const FormatException('Unsafe archive filename.');
+      }
+      if (file.file?.filename != path ||
+          (file.generalPurposeBitFlag & 1) != 0 ||
+          (file.compressionMethod != 0 && file.compressionMethod != 8)) {
+        throw const FormatException('Unsupported or inconsistent ZIP entry.');
+      }
+      total += file.uncompressedSize;
       if (total > 256 * 1024 * 1024 || files.length >= 10000) {
         throw const FormatException(
           'Packed project exceeds extraction limits.',
@@ -543,11 +562,12 @@ class ProjectStore {
       files[path.toLowerCase()] = file;
     }
     final manifest = files[manifestName];
-    if (manifest == null || manifest.name != manifestName) {
+    if (manifest == null || manifest.filename != manifestName) {
       throw const FormatException('Packed project has no sutoriraita.json.');
     }
-    final json =
-        jsonDecode(utf8.decode(manifest.content)) as Map<String, Object?>;
+    final json = jsonDecode(
+      utf8.decode(await _unpackEntry(manifest)),
+    ) as Map<String, Object?>;
     if (json['format'] != 'sutoriraita-project' ||
         (json['formatVersion'] as int? ?? json['version'] as int? ?? 1) > 1) {
       throw const FormatException('Unsupported packed project format.');
@@ -560,14 +580,14 @@ class ProjectStore {
     try {
       await root.create();
       for (final file in files.values) {
-        if (file.name != manifestName &&
-            (!portableDirectories.contains(file.name.split('/').first) ||
-                !_isPortableFile(file.name))) {
+        if (file.filename != manifestName &&
+            (!portableDirectories.contains(file.filename.split('/').first) ||
+                !_isPortableFile(file.filename))) {
           continue;
         }
-        final target = File('${root.path}/${file.name}');
+        final target = File('${root.path}/${file.filename}');
         await target.parent.create(recursive: true);
-        await target.writeAsBytes(file.content, flush: true);
+        await target.writeAsBytes(await _unpackEntry(file), flush: true);
       }
       // A new identity prevents library deduplication from archiving the source.
       json['id'] = _uuid.v4();
@@ -578,6 +598,41 @@ class ProjectStore {
       if (await root.exists()) await root.delete(recursive: true);
       rethrow;
     }
+  }
+
+  Future<Uint8List> _readPackageStream(Stream<List<int>> stream) async {
+    final output = BytesBuilder(copy: false);
+    await for (final chunk in stream) {
+      if (output.length + chunk.length > 128 * 1024 * 1024) {
+        throw const FormatException(
+          'Packed project exceeds the 128 MiB limit.',
+        );
+      }
+      output.add(chunk);
+    }
+    return output.takeBytes();
+  }
+
+  Future<Uint8List> _unpackEntry(ZipFileHeader file) async {
+    final compressed = file.file!.getRawContent();
+    final output = BytesBuilder(copy: false);
+    final Stream<List<int>> stream = file.compressionMethod == 8
+        ? ZLibDecoder(raw: true).bind(Stream.value(compressed))
+        : Stream.value(compressed);
+    await for (final chunk in stream) {
+      if (output.length + chunk.length > file.uncompressedSize) {
+        throw const FormatException('ZIP entry exceeds its declared size.');
+      }
+      output.add(chunk);
+    }
+    final content = output.takeBytes();
+    if (content.length != file.uncompressedSize ||
+        getCrc32(content) != file.crc32) {
+      throw const FormatException(
+        'Corrupt ZIP entry (size/checksum mismatch).',
+      );
+    }
+    return content;
   }
 
   Future<StoryProject?> openLast() async {

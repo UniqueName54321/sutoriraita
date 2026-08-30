@@ -56,3 +56,5 @@ app.*.map.json
 *.p12
 *.mobileprovision
 /android/key.properties
+
+/android/.kotlin/

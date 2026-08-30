@@ -61,9 +61,12 @@ void main() {
     final json = project.toJson();
     Uint8List pack(List<ArchiveFile> files) {
       final archive = Archive();
-      for (final file in files) { archive.addFile(file); }
+      for (final file in files) {
+        archive.addFile(file);
+      }
       return Uint8List.fromList(ZipEncoder().encode(archive));
     }
+
     ArchiveFile entry(String name, String content) {
       final bytes = utf8.encode(content);
       return ArchiveFile(name, bytes.length, bytes);

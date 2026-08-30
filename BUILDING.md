@@ -41,7 +41,11 @@ live folder from multiple instances. Packed documents open as new library copies
 The current Android release configuration deliberately uses a **development/debug
 key** for sideload testing. It is not a production Play Store release. Configure a
 private release keystore and signing configuration before production publication;
-never commit passwords, keystores or provisioning profiles.
+never commit passwords, keystores or provisioning profiles. CI development keys
+can differ between runs and from your local key, so Android may reject an in-place
+upgrade. Use a consistent private signing key for upgrades; export independent
+backups before uninstalling any existing app, because uninstalling removes its
+private project library.
 
 iOS installation/distribution requires an Apple developer team, a suitable bundle
 identifier, certificates and provisioning profiles. Configure those locally or via
@@ -52,9 +56,11 @@ code signed. Existing `com.example.sutoriraita` application identifiers are reta
 to avoid silently changing the existing app's storage/upgrade identity; choose final
 identifiers and a migration strategy before a production release.
 
-Create a version tag and a GitHub **pre-release** only after reviewing successful
-CI artifacts and doing the interactive checks below. No workflow auto-publishes a
-production release. Keep `pubspec.yaml`, README and CHANGELOG versions aligned.
+Before creating a version tag and GitHub **pre-release**, review successful CI
+artifacts and record which interactive checks below were performed or remain
+unverified. A production release requires completing those checks on supported
+platforms. No workflow auto-publishes a production release. Keep `pubspec.yaml`,
+README and CHANGELOG versions aligned.
 
 ## Required interactive checks
 
@@ -73,3 +79,23 @@ SAF saves use provider streams and preserve previous changed content under
 provider write must be treated as a save failure. Re-select folders after access
 is revoked or a provider moves them. Native folder/provider integration is not
 covered by the mocked Dart channel tests and needs the device checks above.
+
+
+## v0.0.1 verification record (2026-08-30)
+
+[CI run 33295809177](https://github.com/UniqueName54321/sutoriraita/actions/runs/33295809177)
+passed analysis, all **28 tests**, and release builds on all five native platforms
+for application commit `3f0c72b3528e954dd492ff26d70ba5bab7538c9f`. Release binaries
+come from that run; subsequent release-preparation changes are documentation only.
+Windows and Android release builds also succeeded locally on Windows.
+
+Downloaded desktop bundles were checked for their executable/runtime and document
+registration metadata/scripts. The iOS artifact's document UTI and disabled automatic
+URL routing were checked, and its Runner app has no app signature/provisioning.
+Windows per-user format registration was applied and its quoted launch command
+verified. The Linux registration script passed shell syntax validation.
+
+No Android emulator or physical device was available in this session. Actual native
+picker/provider interactions, restart permission behavior, and external-open UI
+flows remain unverified on devices. macOS/iOS compilation must not be described as
+interactive platform testing. The Dart SAF tests use a mocked document channel.

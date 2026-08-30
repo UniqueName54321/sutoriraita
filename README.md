@@ -98,3 +98,6 @@ autosave delay live in application settings rather than inside the book.
 
 See [CHANGELOG.md](CHANGELOG.md) for release history and [BUILDING.md](BUILDING.md)
 for all five platforms, CI artifacts, signing requirements and testing limits.
+
+[GitHub CI and build artifacts](https://github.com/UniqueName54321/sutoriraita/actions/workflows/build.yml)
+cover Windows, macOS, Linux, Android and unsigned iOS.

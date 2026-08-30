@@ -293,6 +293,40 @@ void main() {
     },
   );
 
+  test(
+    'Hammer ZIP import uses safe extraction and supports empty stories',
+    () async {
+      final temp = await Directory.systemTemp.createTemp('hammer_zip_');
+      addTearDown(() => temp.delete(recursive: true));
+      final store = ProjectStore(documentsDirectory: () async => temp);
+      final project = HammerFormat.decode(fixture(), 'A story').project;
+      final imported = await store.importHammerPackage(
+        bytes: await store.buildHammerPackage(project),
+      );
+      expect(imported.title, 'A story');
+      expect(imported.wordCount, project.wordCount);
+      final malicious = Archive()
+        ..addFile(
+          ArchiveFile.string('../project.toml', '[info]\ndataVersion = 2'),
+        );
+      await expectLater(
+        store.importHammerPackage(
+          bytes: Uint8List.fromList(ZipEncoder().encode(malicious)),
+        ),
+        throwsFormatException,
+      );
+      for (final section in project.sections) {
+        section.scenes.clear();
+      }
+      final empty = await store.buildHammerPackage(project);
+      expect(
+        ZipDecoder().decodeBytes(empty).findFile('A story/scenes/'),
+        isNotNull,
+      );
+      expect((await store.importHammerPackage(bytes: empty)).wordCount, 0);
+    },
+  );
+
   final examples = Platform.environment['SUTORIRAITA_HAMMER_EXAMPLES'];
   test(
     'Provided Hammer examples import and export without changing manuscript or ancillary files',

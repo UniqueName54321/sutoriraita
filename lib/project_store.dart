@@ -522,6 +522,47 @@ class ProjectStore {
     if (bytes.length > 128 * 1024 * 1024) {
       throw const FormatException('Packed project exceeds the 128 MiB limit.');
     }
+    final files = _readZipDirectory(bytes);
+    final manifest = files[manifestName];
+    if (manifest == null || manifest.filename != manifestName) {
+      throw const FormatException('Packed project has no sutoriraita.json.');
+    }
+    final json = jsonDecode(
+      utf8.decode(await _unpackEntry(manifest)),
+    ) as Map<String, Object?>;
+    if (json['format'] != 'sutoriraita-project' ||
+        (json['formatVersion'] as int? ?? json['version'] as int? ?? 1) > 1) {
+      throw const FormatException('Unsupported packed project format.');
+    }
+    final metadata = StoryProject.fromJson(json);
+    _validateProjectIds(metadata);
+    final root = Directory(
+      await _allocateProjectRoot('${metadata.title} — Copy'),
+    );
+    try {
+      await root.create();
+      for (final file in files.values) {
+        if (file.filename != manifestName &&
+            (!portableDirectories.contains(file.filename.split('/').first) ||
+                !_isPortableFile(file.filename))) {
+          continue;
+        }
+        final target = File('${root.path}/${file.filename}');
+        await target.parent.create(recursive: true);
+        await target.writeAsBytes(await _unpackEntry(file), flush: true);
+      }
+      // A new identity prevents library deduplication from archiving the source.
+      json['id'] = _uuid.v4();
+      await File('${root.path}/$manifestName')
+          .writeAsString(jsonEncode(json), flush: true);
+      return await open(root.path);
+    } catch (_) {
+      if (await root.exists()) await root.delete(recursive: true);
+      rethrow;
+    }
+  }
+
+  Map<String, ZipFileHeader> _readZipDirectory(Uint8List bytes) {
     final directory = ZipDirectory()..read(InputMemoryStream(bytes));
     final files = <String, ZipFileHeader>{};
     var total = 0;
@@ -565,43 +606,7 @@ class ProjectStore {
       }
       files[path.toLowerCase()] = file;
     }
-    final manifest = files[manifestName];
-    if (manifest == null || manifest.filename != manifestName) {
-      throw const FormatException('Packed project has no sutoriraita.json.');
-    }
-    final json = jsonDecode(
-      utf8.decode(await _unpackEntry(manifest)),
-    ) as Map<String, Object?>;
-    if (json['format'] != 'sutoriraita-project' ||
-        (json['formatVersion'] as int? ?? json['version'] as int? ?? 1) > 1) {
-      throw const FormatException('Unsupported packed project format.');
-    }
-    final metadata = StoryProject.fromJson(json);
-    _validateProjectIds(metadata);
-    final root = Directory(
-      await _allocateProjectRoot('${metadata.title} — Copy'),
-    );
-    try {
-      await root.create();
-      for (final file in files.values) {
-        if (file.filename != manifestName &&
-            (!portableDirectories.contains(file.filename.split('/').first) ||
-                !_isPortableFile(file.filename))) {
-          continue;
-        }
-        final target = File('${root.path}/${file.filename}');
-        await target.parent.create(recursive: true);
-        await target.writeAsBytes(await _unpackEntry(file), flush: true);
-      }
-      // A new identity prevents library deduplication from archiving the source.
-      json['id'] = _uuid.v4();
-      await File('${root.path}/$manifestName')
-          .writeAsString(jsonEncode(json), flush: true);
-      return await open(root.path);
-    } catch (_) {
-      if (await root.exists()) await root.delete(recursive: true);
-      rethrow;
-    }
+    return files;
   }
 
   Future<Uint8List> _readPackageStream(Stream<List<int>> stream) async {

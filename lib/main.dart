@@ -153,7 +153,7 @@ class _AppShellState extends State<AppShell> {
                 'Found ${paths.length} stories in Documents/HammerProjects. '
                 'Import copies into Sutōrīraitā? Your Hammer files will not be changed.\n\n'
                 '${paths.map((p) => p.split(Platform.pathSeparator).last).join('\n')}\n\n'
-                'Skipped stories can still be imported from Import → Hammer story folder.',
+                'Skipped stories can still be imported from Import → Hammer story.',
               ),
             ),
           ),
@@ -350,7 +350,42 @@ class WelcomeScreen extends StatelessWidget {
 
   Future<void> _importHammer(BuildContext context) async {
     try {
-      controller.useProject(await controller.store.importHammerFolder());
+      final zip = await showDialog<bool>(
+        context: context,
+        builder: (dialogContext) => SimpleDialog(
+          title: const Text('Import Hammer story'),
+          children: [
+            if (!Platform.isIOS)
+              SimpleDialogOption(
+                onPressed: () => Navigator.pop(dialogContext, false),
+                child: const ListTile(
+                  title: Text('Story folder'),
+                  subtitle: Text('Select the folder containing project.toml'),
+                ),
+              ),
+            SimpleDialogOption(
+              onPressed: () => Navigator.pop(dialogContext, true),
+              child: const ListTile(
+                title: Text('Story ZIP'),
+                subtitle: Text('A ZIP containing one Hammer story folder'),
+              ),
+            ),
+            if (Platform.isIOS)
+              const Padding(
+                padding: EdgeInsets.all(24),
+                child: Text(
+                  'On iOS, compress the Hammer story folder in Files, then select the ZIP.',
+                ),
+              ),
+          ],
+        ),
+      );
+      if (zip == null) return;
+      controller.useProject(
+        zip
+            ? await controller.store.importHammerPackage()
+            : await controller.store.importHammerFolder(),
+      );
     } on ProjectCancelled {
       // Native folder picker dismissed.
     } catch (error) {
@@ -491,7 +526,7 @@ class WelcomeScreen extends StatelessWidget {
                                   onPressed: () => _importNovelist(context),
                                 ),
                                 (
-                                  label: 'Hammer story folder',
+                                  label: 'Hammer story…',
                                   icon: Icons.folder_copy_outlined,
                                   onPressed: () => _importHammer(context),
                                 ),

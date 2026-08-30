@@ -2,7 +2,8 @@
 
 ## v0.0.3 pre-alpha — 2026-08-30
 
-- Import Hammer dataVersion-2 story folders, including Android document-tree URIs.
+- Import Hammer dataVersion-2 story folders and ZIPs, including Android document-tree
+  URIs. iOS uses ZIP import to avoid losing access to security-scoped folders.
 - Preserve ordered Markdown scenes, root scenes, encyclopedia, author/language,
   and source notes, timeline, images and drafts without changing the originals.
 - Detect readable desktop Documents/HammerProjects folders at startup and request

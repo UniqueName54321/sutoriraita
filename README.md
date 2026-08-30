@@ -82,8 +82,11 @@ canonical source and its compatibility metadata live conspicuously under
 
 ## Hammer and Novelist stories (v0.0.3)
 
-Use **Import → Hammer story folder** and select the individual story folder
+Use **Import → Hammer story → Story folder** and select the individual story folder
 containing `project.toml` and `scenes`, not its parent `HammerProjects` folder.
+Alternatively, select **Story ZIP** to import a ZIP containing one Hammer project.
+On iOS, compress the story folder in Files and use Story ZIP; folder import is not
+offered because the current picker does not retain the required security scope.
 The import creates a separate editable copy. Android uses its system document-tree
 picker; it never treats a `content://` URI as a filesystem path.
 

@@ -145,6 +145,73 @@ extension StoryTransfer on ProjectStore {
     return project;
   }
 
+  Future<StoryProject> importHammerPackage({
+    Uint8List? bytes,
+    String? sourcePath,
+  }) async {
+    var title = 'Hammer story';
+    if (bytes == null && sourcePath == null) {
+      final picked = await FilePicker.pickFiles(
+        dialogTitle: 'Import Hammer story ZIP',
+        type: FileType.any,
+      );
+      if (picked.isEmpty) throw const ProjectCancelled();
+      title = picked.single.name.replaceFirst(
+        RegExp(r'(\.hammer)?\.zip$', caseSensitive: false),
+        '',
+      );
+      bytes = await _readPackageStream(picked.single.readAsByteStream());
+    }
+    bytes ??= await _readPackageStream(File(sourcePath!).openRead());
+    if (bytes.length > 128 * 1024 * 1024) {
+      throw const FormatException('Hammer ZIP exceeds 128 MiB.');
+    }
+    final entries = _readZipDirectory(bytes);
+    final manifests = entries.values
+        .where(
+          (f) =>
+              f.filename == 'project.toml' ||
+              f.filename.endsWith('/project.toml'),
+        )
+        .toList();
+    if (manifests.length != 1) {
+      throw const FormatException(
+        'Choose a ZIP containing exactly one Hammer story.',
+      );
+    }
+    final prefix = manifests.single.filename.substring(
+      0,
+      manifests.single.filename.length - 'project.toml'.length,
+    );
+    if (prefix.isNotEmpty) {
+      title = prefix.split('/').where((p) => p.isNotEmpty).last;
+    }
+    final files = <String, Uint8List>{};
+    var total = 0;
+    for (final entry in entries.values) {
+      if (!entry.filename.startsWith(prefix)) continue;
+      final path = entry.filename.substring(prefix.length);
+      if (path != 'project.toml' &&
+          path != 'project_data.toml' &&
+          !{
+            'scenes',
+            'encyclopedia',
+            'notes',
+            'timeline',
+            'drafts',
+          }.contains(path.split('/').first)) {
+        continue;
+      }
+      _validateTransferPath(path);
+      total += entry.uncompressedSize;
+      if (total > 128 * 1024 * 1024) {
+        throw const FormatException('Hammer project exceeds 128 MiB.');
+      }
+      files[path] = await _unpackEntry(entry);
+    }
+    return _importHammerFiles(files, title);
+  }
+
   Future<StoryProject> _importHammerFiles(
     Map<String, Uint8List> files,
     String name,
@@ -177,6 +244,7 @@ extension StoryTransfer on ProjectStore {
     final files = HammerFormat.encode(project, source: source);
     final archive = Archive();
     final folder = HammerFormat.encodeName(project.title);
+    archive.addFile(ArchiveFile.directory('$folder/scenes/'));
     var total = 0;
     for (final entry in files.entries) {
       _validateTransferPath(entry.key);

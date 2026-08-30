@@ -1,0 +1,179 @@
+{
+  "exampleProjectVersion": 5,
+  "minimumFormatVersion": 1,
+  "title": "Mochi, Markdown & the Moonlight Laundromat",
+  "author": "The Sutōrīraitā House Raccoon",
+  "language": "en",
+  "genres": ["slice-of-life", "mystery"],
+  "sections": [
+    {
+      "title": "Chapter One — A Novel Emergency",
+      "scenes": [
+        {
+          "title": "The Blank Page Has Teeth",
+          "content": "Mika had been staring at the blank document for eleven minutes when it blinked first.\n\n\"Absolutely not,\" said the red fox, flattening both ears at the screen. \"I refuse to be intimidated by a rectangle.\"\n\nAcross the Moonlight Laundromat, Ren looked up from folding a fitted sheet into something that technically qualified as a knot. The raccoon wore the expression of somebody who had caused this problem and was delighted by it.\n\n\"You made a new Sutōrīraitā project,\" Ren said. \"That is already more progress than yesterday.\"\n\n\"Yesterday I made tea.\"\n\n\"Exactly. Today the project is safely in **Documents/Sutōrīraitā Projects**. Tomorrow, literature.\"\n\nMika glanced at the manuscript sidebar. A chapter and an opening scene waited there, patient and neatly labelled. The blank page no longer had teeth. At worst, it had a mildly judgmental cursor.\n\n> Tutorial in disguise: new projects are ordinary folders created automatically in the Sutōrīraitā Projects library. Your Markdown remains readable even outside the app."
+        },
+        {
+          "title": "Ren Names Everything",
+          "content": "Ren believed names were a form of preventative maintenance. This was why every laundromat trolley had a label, including **Sir Squeaks-a-Lot**, whose left wheel objected to corners.\n\nThey tapped the scene title.\n\n\"You can rename a scene right here,\" Ren said. \"Try it.\"\n\nMika renamed *Untitled scene* to *The Extremely Professional Opening*.\n\n\"That is worse.\"\n\n\"But it is mine.\"\n\nA new scene appeared beneath it. Ren dragged the handle beside the scene and moved it above the first, then moved it back before Mika could hiss.\n\n\"Scenes can be created, renamed, deleted, and reordered. Use the chapter menu when you need another chapter. Use a scene's menu to move it between chapters.\"\n\nMika narrowed her eyes. \"Are you explaining the app to me through banter?\"\n\n\"No,\" Ren lied, folding another sheet into a smaller crisis."
+        }
+      ]
+    },
+    {
+      "title": "Chapter Two — Domestic Markdown",
+      "scenes": [
+        {
+          "title": "Bold Decisions, Italic Consequences",
+          "content": "The dryers turned with the soft rhythm of distant weather. Mika finally began to type.\n\nShe selected the phrase *very serious novelist* and pressed **Ctrl+B**.\n\n\"Now it says very serious novelist, but louder,\" Ren observed.\n\n\"Bold text is confidence.\"\n\n\"Bold text is two asterisks on either side. Ctrl+I gives you italics, and the heading button starts a Markdown heading.\"\n\n## Mika's emergency snack inventory\n\n- One packet of sea-salt crackers\n- Half a cinnamon bun\n- The other half, theoretically belonging to Ren\n\nMika watched the save indicator change from *Editing* to *Saving…* to *Saved*. She had not clicked a save button.\n\n\"Aggressive autosave,\" Ren said. \"Your prose is written atomically, and the previous good copy goes into the recovery folder.\"\n\nMika quietly moved the cinnamon bun to her side of the table. Some changes required immediate commitment."
+        },
+        {
+          "title": "The Scene-Switching Incident",
+          "content": "Mika typed a sentence, switched scenes, and immediately switched back.\n\nThe sentence was still there.\n\nShe repeated the experiment six times with increasing suspicion.\n\n\"Scene switching does not eat text,\" Ren said.\n\n\"That sounds like something an app says shortly before eating text.\"\n\n\"The editor updates the scene model immediately, then autosave follows. On Windows, Ctrl+S forces a save. Ctrl+Shift+N creates another scene. Undo and redo belong to the text editor, where nature intended them.\"\n\nMika added another sentence and switched away once more. It survived.\n\n\"Fine,\" she said. \"The rectangle may live.\""
+        }
+      ]
+    },
+    {
+      "title": "Chapter Three — The Portable Raccoon",
+      "scenes": [
+        {
+          "title": "The Folder From 2019",
+          "content": "Ren produced a USB drive from somewhere inside their cardigan.\n\n\"I found your old draft.\"\n\nMika stared at the drive as though it contained an active wasp nest. \"That novel has seven prologues.\"\n\n\"And each chapter is a Markdown file. From the welcome screen, **Import Markdown** turns a folder of `.md` files into scenes, sorted by filename. Numbered prefixes help preserve the order.\"\n\n\"Can it import my dignity?\"\n\n\"Unsupported format.\"\n\nThe laundromat lights flickered. Sir Squeaks-a-Lot rolled three centimetres downhill without assistance. Neither of them acknowledged it."
+        },
+        {
+          "title": "One File to Throw at a Critique Group",
+          "content": "At midnight, Mika's critique group demanded the draft. Politely, but with the unmistakable energy of wolves who knew she had promised pages.\n\nRen opened the project menu.\n\n\"Export Markdown makes one combined manuscript. Export plain text removes the structural Markdown. Export portable package creates a `.sutoriraita` file.\"\n\n\"Does autosave keep rebuilding that ZIP?\"\n\n\"No. The ordinary folder is the live project. The portable file is made only when you request it. It contains canonical project data, not recovery copies, caches, temporary files, or other portable packages.\"\n\n\"No recursive novels?\"\n\n\"The age of Sutōrīraitā matryoshka dolls is over.\"\n\nMika exported the package, sent it, and leaned back as the last dryer chimed. Her novel was still unfinished. Her laundry was slightly pink. But every word was where she had left it.\n\nFor a Tuesday, that counted as triumph."
+        }
+      ]
+    },
+    {
+      "title": "Chapter Four — The Index Card Conspiracy",
+      "scenes": [
+        {
+          "title": "The Shelf That Finds Its Own Books",
+          "content": "On Wednesday, Mika returned to find every project waiting on the Sutōrīraitā project list.\n\n\"It found them by itself,\" she said.\n\nRen nodded. \"It scans **Documents/Sutōrīraitā Projects** for valid manifests. A random folder cannot bluff its way onto the shelf.\"\n\nMika opened App settings. \"And this switch?\"\n\n\"Choose whether startup returns to the current project or opens the project list. The example stays bundled separately; this is only your editable copy.\"\n\nMika selected the project list. She liked being greeted by all her unfinished obligations at once. It felt democratic."
+        },
+        {
+          "title": "Everybody Gets an Index Card",
+          "content": "Ren clicked **Lore**. Three encyclopedia entries appeared: Mika, Ren, and the Moonlight Laundromat.\n\n\"Character, Location, Group, Object, Event, Concept, and Other,\" Ren recited. \"Every kind of narrative nuisance gets an index card. Entries use CommonMark too.\"\n\nThe app had also noticed repeated proper names in the manuscript. Suggested entries waited below the encyclopedia, created by deterministic rules rather than AI. Clicking one turned the suggestion into an editable entry.\n\n\"Character, location, and group detection is standard,\" Ren continued. \"Objects and events are experimental and opt-in under App settings.\"\n\nMika switched a scene from **View** to **Write**, inspected the plain CommonMark, then switched back. The asterisks disappeared; headings, lists, emphasis, links, code, and quotes rendered as formatted CommonMark.\n\n\"So the raw marks are for writing, and View shows the page?\"\n\n\"Precisely.\"\n\nMika created an Object entry for Sir Squeaks-a-Lot.\n\nSome narrative nuisances had earned it."
+        }
+      ]
+    },
+    {
+      "title": "Chapter Five — The Raccoon in the Machine",
+      "scenes": [
+        {
+          "id": "spelling-without-sorcery",
+          "title": "Spelling Without Sorcery",
+          "content": "Mika typed `teh laundromat` and a small spellcheck badge appeared.\n\n\"Did an artificial intelligence just judge me?\"\n\n\"No,\" Ren said. \"Deterministic proofreading. It stays on-device, applies explicit rules, and does not need Gemmell.\"\n\nMika corrected *teh* to *the*, then enabled **Gemmell McGee** in App settings. The assistant had been completely disabled by default. She renamed him *Laundry Goblin*, changed the pronouns, selected **Snarky**, set its intensity to **2 — A little**, and chose **Preserve the manuscript voice** from the Editing style dropdown.\n\n\"Tone intensity runs from **1 — Very little** to **5 — Extremely overboard**,\" Ren said. \"Three is noticeable, four is strong, and five means you knowingly invited the goblin onto the chandelier. Editing style is a dropdown too, so projects get consistent instructions instead of accidental near-duplicates.\"\n\nThe sparkle opened a toolbox rather than a tiny mystery menu. Every scene tool explained what it did and showed an example. Selecting prose and right-clicking revealed a separate selection toolbox; those tools never appeared under the sparkle.\n\nThen Mika found **Prose Transformation**, switched off even though Gemmell was on. Enabling it required two warning dialogs and typing `ENABLE PROSE TRANSFORMATION` exactly. Only then did selection-only tools such as **Expand Prose**, **Condense Prose**, **Rewrite for Clarity**, and **Adjust Reading Level** appear.\n\n\"They copy requests for proposed rewrites,\" Ren said. \"They never replace your manuscript. The prompt tells the chatbot to preserve voice, facts, POV, tense, dialogue, weird grammar, dialect, jokes, contradictions, and characterization. Expand even admits that more words can mean repetition, pacing trouble, or invented connective tissue.\"\n\nMika left the feature disabled. Knowing where a lever was did not oblige her to pull it. She could continue to [Facts With Labels](scene:facts-with-labels) without outsourcing a single sentence.\n\n\"Prompt Bridge does not contact anything,\" Ren added. \"It packages a deterministic prompt and copies it. You paste it into your chosen chatbot.\"\n\nMika selected a dubious sentence, chose **Check for POV leaks**, and decided that being judged by a mildly snarky laundry goblin was acceptable if the laundry goblin showed its working."
+        },
+        {
+          "title": "The Manuscript Is Too Large for the Clipboard",
+          "content": "The whole-story tools wore a **WHOLE STORY** label. Continuity Audit, Knowledge Timeline, Foreshadowing Map, Forgotten Character Detector, Relationship Drift, Pacing, Developmental Review, and Canon Audit all needed more than one scene.\n\nWhen Mika chose one, Sutōrīraitā exported a clean `.sutoriraita` package and copied a short package-aware prompt.\n\nA toast remained on-screen long enough to be useful:\n\n> Attach the exported portable package to your chatbot when you send the prompt.\n\nThe prompt did not duplicate the enormous manuscript onto the clipboard, and it explicitly told the chatbot to admit when it could not inspect ZIP attachments.\n\n\"A surprisingly important instruction,\" Mika said.\n\n\"Confidence is not the same thing as opening the file,\" Ren replied."
+        }
+      ]
+    },
+    {
+      "title": "Chapter Six — Canon Gets Organised",
+      "scenes": [
+        {
+          "id": "facts-with-labels",
+          "title": "Facts With Labels",
+          "content": "Mika opened her own Character entry. It no longer consisted solely of an index card and a large freeform box.\n\nThere were structured fields for role, pronouns, occupation, appearance, and goals. The active **Slice of Life** pack extended the existing occupation field and added timetable and hobbies; **Mystery** added alibi and motive, plus friendly Suspect, Clue, Crime scene, and Case labels backed by namespaced IDs. Mika added a custom field called **Preferred dryer** without installing or authoring a genre pack.\n\nThe structured facts could generate a starter body—clearly labelled as a base to review rather than final prose—or replace a bad body with a cleaner base. The CommonMark body still remained freely editable.\n\n\"Genres are schemas, not stickers,\" Ren said. \"Mystery, Romance, Horror, Historical, Crime / Thriller, Post-Apocalyptic, Superhero, Adventure, Slice of Life, Dystopian, Science Fiction, and Fantasy each contribute declarative fields, subtypes, and relations. A `.sutorigp` file can do the same, but never run code or create a new top-level entry type. Anything genuinely outside Character, Location, Group, Object, Event, Concept, or Other stays under Other.\"\n\nMika regarded the new *Preferred dryer* field.\n\n\"Dryer Seven,\" she entered. \"Canon. Also, my alibi for the missing sock is that I was eating crackers.\""
+        },
+        {
+          "title": "The Boyfriend Graph",
+          "content": "Ren drew a line between two Character entries.\n\n\"Relations come in three families,\" they said. \"Symmetric relations read both ways: friend of, sibling of, or Slice of Life's coworker of. Inverse pairs change labels: parent of and child of, employer of and employed by, leader of and led by. Directional relations only point one way: Mystery's suspects and witnessed, or the basic knows about and created.\"\n\nRelations could carry structured fields of their own. *Coworker of* recorded the workplace; *witnessed* recorded an account and its reliability. Every built-in genre now contributes relations suited to its subject, and imported packs can declare more using the same safe data-only schema.\n\nMika connected herself to Ren with **coworker of**, set *workplace* to `Moonlight Laundromat`, and recorded that Ren **witnessed** the Fitted-Sheet Incident with reliability `alarmingly high`. Sir Squeaks-a-Lot remained **located in** the laundromat.\n\nGemmell's encyclopedia toolbox could review an entry, compare it with canon, find unanswered questions, map relationships, check aliases, suggest structure, and **Extract structured facts from entry body** using the current schema. In the manuscript, Mika could select prose and choose **Extract encyclopedia facts from prose** to group evidence-backed facts by entity. Both tools proposed reviewable changes, separated inference, and refused to pretend they had edited fields automatically.\n\n\"So if the manuscript says I stole the missing sock—\" Mika began.\n\n\"Potential inconsistency,\" Ren said. \"Your alibi says crackers. Gemmell must show evidence.\""
+        },
+        {
+          "title": "Every Exit Is an Export",
+          "content": "Before closing, Mika searched the project library, sorted it by word count, backed up one project from its context menu, and archived another. Archive was recoverable; permanent deletion was not. A single destructive action asked *are you sure?* Bulk archive or deletion demanded an exact phrase and a small arithmetic problem.\n\nShe imported an old **Novelist `.nov`** backup. Sutōrīraitā preserved its ranked chapters, scenes, paragraphs, emphasis, author, and timestamp, then recognized newer copies of the same source and moved older duplicates into `.archive`.\n\nMika selected the words *the earlier warning*, chose **More CommonMark → Internal scene link**, and pointed them at [Spelling Without Sorcery](scene:spelling-without-sorcery). The stored link was ordinary Markdown with a stable scene ID, so renaming the destination would not snap it. In View mode it jumped directly there.\n\n\"HTML and EPUB turn that into a clickable anchor,\" Ren said. \"PDF pagination resolves it to the destination page and recalculates the number whenever layout changes. The printed book cannot click, but it can still know where it is going.\"\n\nFinally she opened **Export manuscript**. Markdown, EPUB, FictionBook 2, PDF, HTML, OpenDocument Text, and plain TXT waited beside the separate portable-project export.\n\n\"EPUB for e-books, FB2 for Russian readers, six-by-nine PDF for print, HTML for the web, ODT for editing, TXT for anything with a pulse,\" Ren counted.\n\nThe PDF retained both `Sutōrīraitā` and `Экспорт`.\n\nMika closed the project. Atomic saves, recovery copies, project discovery, internal links, and aggressive autosave had already done their quiet work.\n\nSir Squeaks-a-Lot rolled past with the dignity of an object that now possessed structured fields, a subtype, and two verified relations."
+        }
+      ]
+    }
+  ],
+  "encyclopedia": [
+    {
+      "title": "Mika",
+      "type": "character",
+      "subtype": "mystery.suspect",
+      "fields": {
+        "role": "Protagonist",
+        "pronouns": "she/her",
+        "occupation": "Reluctant novelist",
+        "goals": "Finish a chapter before the laundry does",
+        "slice-of-life.timetable": "Laundry night, after dark",
+        "slice-of-life.hobbies": "Writing and defending cinnamon buns",
+        "mystery.alibi": "Eating sea-salt crackers when the sock disappeared",
+        "mystery.motive": "The sock was threatening the cinnamon bun",
+        "custom:Preferred dryer": "Dryer Seven"
+      },
+      "content": "A red fox, reluctant novelist, and committed opponent of blank rectangles.\n\n- **Role:** Protagonist\n- **Current goal:** Finish a chapter before the laundry does\n- **Known weakness:** Cinnamon buns"
+    },
+    {
+      "title": "Ren",
+      "type": "character",
+      "fields": {
+        "role": "House raccoon and suspiciously convenient software guide",
+        "pronouns": "they/them",
+        "occupation": "Laundromat attendant",
+        "slice-of-life.occupation": "Laundromat attendant",
+        "slice-of-life.timetable": "Night shift",
+        "slice-of-life.hobbies": "Naming trolleys and failing fitted sheets"
+      },
+      "content": "A raccoon who explains software through suspiciously convenient banter. Better at project organisation than fitted sheets."
+    },
+    {
+      "title": "Moonlight Laundromat",
+      "type": "location",
+      "subtype": "Crime scene",
+      "fields": {
+        "region": "The neighborhood high street",
+        "purpose": "Late-night laundry and accidental writing workshop"
+      },
+      "content": "A late-night laundromat with dependable dryers, unreliable trolleys, and unusually strong opinions about manuscript safety."
+    },
+    {
+      "title": "Sir Squeaks-a-Lot",
+      "type": "object",
+      "subtype": "Clue",
+      "fields": {
+        "owner": "Moonlight Laundromat",
+        "function": "Laundry trolley with one philosophically opposed wheel",
+        "mystery.clueStatus": "Suspiciously mobile",
+        "custom:Wheel condition": "Squeaky but canonical"
+      },
+      "content": "A laundromat trolley whose left wheel objects to corners and whose unexplained movements are not yet classified as paranormal."
+    },
+    {
+      "title": "The Fitted-Sheet Incident",
+      "type": "event",
+      "subtype": "Case",
+      "fields": {
+        "date": "Tuesday night",
+        "outcome": "The sheet became a knot",
+        "mystery.caseStatus": "Closed for lack of dignity"
+      },
+      "content": "The night Ren attempted to fold a fitted sheet and accidentally established both an alibi and a workplace legend."
+    }
+  ],
+  "relations": [
+    {
+      "from": "Mika",
+      "to": "Ren",
+      "type": "slice-of-life.coworker-of",
+      "fields": {"workplace": "Moonlight Laundromat"}
+    },
+    {
+      "from": "Sir Squeaks-a-Lot",
+      "to": "Moonlight Laundromat",
+      "type": "located",
+      "fields": {}
+    },
+    {
+      "from": "Ren",
+      "to": "The Fitted-Sheet Incident",
+      "type": "mystery.witnessed",
+      "fields": {"account": "The sheet fought back", "reliability": "Alarmingly high"}
+    }
+  ]
+}

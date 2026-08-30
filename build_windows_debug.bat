@@ -1,0 +1,41 @@
+@echo off
+setlocal
+
+rem Always build from the directory containing this script.
+pushd "%~dp0" || (
+  echo ERROR: Could not open the project directory.
+  exit /b 1
+)
+
+where flutter >nul 2>nul
+if errorlevel 1 (
+  echo ERROR: Flutter was not found on PATH.
+  echo Install Flutter and add its bin directory to PATH, then try again.
+  popd
+  exit /b 1
+)
+
+echo Enabling Flutter Windows desktop support...
+call flutter config --enable-windows-desktop
+if errorlevel 1 goto :failed
+
+echo Fetching project dependencies...
+call flutter pub get
+if errorlevel 1 goto :failed
+
+echo Building the Windows debug version...
+call flutter build windows --debug
+if errorlevel 1 goto :failed
+
+echo.
+echo Debug build complete.
+echo Output: %~dp0build\windows\x64\runner\Debug
+popd
+exit /b 0
+
+:failed
+echo.
+echo ERROR: Windows debug build failed. Review the Flutter output above.
+echo Run "flutter doctor" to check for missing Visual Studio components.
+popd
+exit /b 1

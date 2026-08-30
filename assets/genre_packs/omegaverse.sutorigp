@@ -1,0 +1,176 @@
+{
+  "format": "sutoriraita-genre-pack",
+  "formatVersion": 1,
+  "id": "omegaverse",
+  "name": "Omegaverse",
+  "description": "Secondary dynamics, cycles, scent, bonds, packs, social roles, and consent-aware relationship structures.",
+  "version": 1,
+  "subtypes": {
+    "character": ["Alpha", "Beta", "Omega"],
+    "group": ["Pack"],
+    "event": ["Bonding ceremony", "Heat or rut"],
+    "concept": ["Secondary dynamics", "Bond", "Scent communication"]
+  },
+  "fields": [
+    {
+      "key": "omegaverse.secondaryDesignation",
+      "label": "Secondary designation",
+      "entryType": "character"
+    },
+    {
+      "key": "omegaverse.scent",
+      "label": "Scent",
+      "entryType": "character"
+    },
+    {
+      "key": "omegaverse.cyclePattern",
+      "label": "Cycle pattern",
+      "entryType": "character"
+    },
+    {
+      "key": "omegaverse.suppressants",
+      "label": "Suppressants or management",
+      "entryType": "character"
+    },
+    {
+      "key": "omegaverse.bondStatus",
+      "label": "Bond status",
+      "entryType": "character"
+    },
+    {
+      "key": "omegaverse.packRole",
+      "label": "Pack role",
+      "entryType": "character"
+    },
+    {
+      "key": "omegaverse.nestingPreferences",
+      "label": "Nesting preferences",
+      "entryType": "character",
+      "subtype": "Omega"
+    },
+    {
+      "key": "omegaverse.alphaPresentation",
+      "label": "Alpha presentation",
+      "entryType": "character",
+      "subtype": "Alpha"
+    },
+    {
+      "key": "omegaverse.socialExpectations",
+      "label": "Social expectations",
+      "entryType": "character"
+    },
+    {
+      "key": "omegaverse.consentBoundaries",
+      "label": "Consent and boundaries",
+      "entryType": "character"
+    },
+    {
+      "key": "omegaverse.packStructure",
+      "label": "Pack structure",
+      "entryType": "group",
+      "subtype": "Pack"
+    },
+    {
+      "key": "omegaverse.membershipRules",
+      "label": "Membership rules",
+      "entryType": "group"
+    },
+    {
+      "key": "omegaverse.customs",
+      "label": "Customs",
+      "entryType": "group"
+    },
+    {
+      "key": "omegaverse.trigger",
+      "label": "Trigger",
+      "entryType": "event"
+    },
+    {
+      "key": "omegaverse.duration",
+      "label": "Duration",
+      "entryType": "event"
+    },
+    {
+      "key": "omegaverse.participants",
+      "label": "Participants",
+      "entryType": "event"
+    },
+    {
+      "key": "omegaverse.rules",
+      "label": "Rules",
+      "entryType": "concept"
+    },
+    {
+      "key": "omegaverse.variations",
+      "label": "Setting-specific variations",
+      "entryType": "concept"
+    }
+  ],
+  "relations": [
+    {
+      "id": "omegaverse.bonded-with",
+      "label": "bonded with",
+      "kind": "symmetric",
+      "fromTypes": ["character"],
+      "toTypes": ["character"],
+      "fields": ["bond type", "status", "since", "consent notes"]
+    },
+    {
+      "id": "omegaverse.packmate-of",
+      "label": "packmate of",
+      "kind": "symmetric",
+      "fromTypes": ["character"],
+      "toTypes": ["character"],
+      "fields": ["pack", "closeness"]
+    },
+    {
+      "id": "omegaverse.member-of-pack",
+      "label": "member of",
+      "inverseLabel": "has member",
+      "kind": "inversePair",
+      "fromTypes": ["character"],
+      "toTypes": ["group"],
+      "fields": ["role", "status", "joined"]
+    },
+    {
+      "id": "omegaverse.compatible-with",
+      "label": "compatible with",
+      "kind": "symmetric",
+      "fromTypes": ["character"],
+      "toTypes": ["character"],
+      "fields": ["basis", "certainty"]
+    },
+    {
+      "id": "omegaverse.scent-marks",
+      "label": "scent-marks",
+      "kind": "directional",
+      "fromTypes": ["character"],
+      "toTypes": ["character", "object", "location"],
+      "fields": ["meaning", "permission", "duration"]
+    },
+    {
+      "id": "omegaverse.protects",
+      "label": "protects",
+      "kind": "directional",
+      "fromTypes": ["character", "group"],
+      "toTypes": ["character", "group", "location"],
+      "fields": ["reason", "scope"]
+    },
+    {
+      "id": "omegaverse.hierarchy-over",
+      "label": "holds authority over",
+      "kind": "directional",
+      "fromTypes": ["character"],
+      "toTypes": ["character", "group"],
+      "fields": ["context", "limits", "contested"]
+    },
+    {
+      "id": "omegaverse.participates-in",
+      "label": "participates in",
+      "kind": "directional",
+      "fromTypes": ["character", "group"],
+      "toTypes": ["event"],
+      "fields": ["role", "choice", "outcome"]
+    }
+  ]
+}

@@ -86,7 +86,8 @@ covered by the mocked Dart channel tests and needs the device checks above.
 [CI run 33295809177](https://github.com/UniqueName54321/sutoriraita/actions/runs/33295809177)
 passed analysis, all **28 tests**, and release builds on all five native platforms
 for application commit `3f0c72b3528e954dd492ff26d70ba5bab7538c9f`. Release binaries
-come from that run; subsequent release-preparation changes are documentation only.
+come from that run; subsequent release-preparation changes affect only documentation and the manual
+artifact-staging workflow, not application code.
 Windows and Android release builds also succeeded locally on Windows.
 
 Downloaded desktop bundles were checked for their executable/runtime and document
@@ -99,3 +100,10 @@ No Android emulator or physical device was available in this session. Actual nat
 picker/provider interactions, restart permission behavior, and external-open UI
 flows remain unverified on devices. macOS/iOS compilation must not be described as
 interactive platform testing. The Dart SAF tests use a mocked document channel.
+
+
+The manual **Stage pre-alpha release assets** workflow takes a successful build
+run ID and an existing draft pre-release tag, downloads all five CI artifacts,
+and uploads them with SHA256SUMS. It refuses failed builds or published/non-pre-alpha
+releases, and never publishes the draft. Review the selected build commit and
+artifact checksums before publishing the pre-release.

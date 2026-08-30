@@ -1,0 +1,45 @@
+name: Stage pre-alpha release assets
+on:
+  workflow_dispatch:
+    inputs:
+      run_id:
+        description: Successful Test and build run ID
+        required: true
+      tag:
+        description: Existing draft pre-release tag
+        required: true
+        default: v0.0.1-pre-alpha
+permissions:
+  actions: read
+  contents: write
+jobs:
+  stage:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      RUN_ID: ${{ inputs.run_id }}
+      TAG: ${{ inputs.tag }}
+    steps:
+      - name: Require successful build and draft pre-release
+        run: |
+          test "$(gh run view "$RUN_ID" --json conclusion --jq .conclusion)" = success
+          test "$(gh run view "$RUN_ID" --json workflowName --jq .workflowName)" = 'Test and build'
+          test "$(gh release view "$TAG" --json isDraft --jq .isDraft)" = true
+          test "$(gh release view "$TAG" --json isPrerelease --jq .isPrerelease)" = true
+      - uses: actions/download-artifact@v4
+        with:
+          github-token: ${{ github.token }}
+          run-id: ${{ inputs.run_id }}
+          path: artifacts
+      - name: Stage verified build artifacts without publishing
+        run: |
+          mkdir dist
+          cp artifacts/sutoriraita-windows/sutoriraita-windows.zip dist/
+          cp artifacts/sutoriraita-linux/sutoriraita-linux.tar.gz dist/
+          cp artifacts/sutoriraita-macos/sutoriraita-macos.zip dist/
+          cp artifacts/sutoriraita-ios/sutoriraita-ios-unsigned.zip dist/
+          cp artifacts/sutoriraita-android/build/app/outputs/flutter-apk/app-release.apk dist/sutoriraita-android.apk
+          (cd dist && sha256sum sutoriraita-* > SHA256SUMS)
+          gh release upload "$TAG" dist/* --clobber

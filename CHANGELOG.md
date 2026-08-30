@@ -5,7 +5,6 @@
 - Group welcome-screen actions into New project, Open and Import dropdown menus.
   All existing actions remain available; future formats can be added without
   expanding the button row.
-
 - Keep the same project/container format and existing creation, opening and import behavior.
 - Increment the application version to `0.0.2+2` and update the in-app pre-alpha label.
 

@@ -69,10 +69,10 @@ version and remains **1**; this menu update needs no data migration.
 ## Required interactive checks
 
 1. Create, edit, close and resume a normal library project; verify recovery files.
-2. Android: select a project via Open Folder in Files, edit, force-stop and reopen;
+2. Android: select a project via Open → Project folder in Files, edit, force-stop and reopen;
    confirm changes in the provider. Repeat with a cloud provider, revoked access,
    picker cancellation and a folder missing `sutoriraita.json`.
-3. On each OS: Open Project, cancel the picker, open a valid snapshot, reject an
+3. On each OS: Open → Packed project, cancel the picker, open a valid snapshot, reject an
    invalid ZIP, edit/export/reopen, and confirm the source snapshot is unchanged.
 4. Open `.sutoriraita` from the system file manager with the app stopped and running.
    Test filenames containing spaces and non-ASCII characters.
@@ -84,6 +84,20 @@ provider write must be treated as a save failure. Re-select folders after access
 is revoked or a provider moves them. Native folder/provider integration is not
 covered by the mocked Dart channel tests and needs the device checks above.
 
+
+## v0.0.2 verification record (2026-08-30)
+
+[CI run 33296789835](https://github.com/UniqueName54321/sutoriraita/actions/runs/33296789835)
+passed analysis, all **28 tests**, and release builds for Windows, macOS, Linux,
+Android and unsigned iOS at application commit
+`7f56160cc299bb88391450d7304f015052a39f0d`. The release uses those artifacts;
+subsequent release-preparation commits only update documentation.
+
+The local Windows executable reports `0.0.2+2`; downloaded macOS and iOS app
+metadata reports version `0.0.2`, build `2`. The new release tag is
+`v0.0.2-pre-alpha` and download filenames include that version. No project-format
+change or data migration is involved. Device-level UI checks remain unperformed;
+compilation and unit/widget test results are not a substitute for them.
 
 ## v0.0.1 verification record (2026-08-30)
 

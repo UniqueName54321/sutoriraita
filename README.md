@@ -6,7 +6,8 @@ tested and are especially likely to have bugs, even when their builds compile.
 
 The dropdown menu redesign is the **v0.0.2 update**, separate from the initial
 v0.0.1 release. Existing projects remain compatible; no migration is needed.
-See [CHANGELOG.md](CHANGELOG.md) for the changes in each version.
+See [CHANGELOG.md](CHANGELOG.md) for the changes in each version, or
+[download v0.0.2 pre-alpha](https://github.com/UniqueName54321/sutoriraita/releases/tag/v0.0.2-pre-alpha).
 
 A calm, local-first story-writing workspace targeting Windows, Android, Linux,
 macOS and iOS.

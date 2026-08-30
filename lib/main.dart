@@ -400,7 +400,7 @@ class WelcomeScreen extends StatelessWidget {
                         _ProjectLibrary(controller: controller),
                         const SizedBox(height: 46),
                         const Text(
-                          'VERSION 0.0.1  •  WINDOWS + ANDROID',
+                          'VERSION 0.0.2  •  PRE-ALPHA',
                           style: TextStyle(
                             fontFamily: 'Segoe UI',
                             fontSize: 11,

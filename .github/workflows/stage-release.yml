@@ -8,7 +8,6 @@ on:
       tag:
         description: Existing draft pre-release tag
         required: true
-        default: v0.0.1-pre-alpha
 permissions:
   actions: read
   contents: write
@@ -26,6 +25,9 @@ jobs:
         run: |
           test "$(gh run view "$RUN_ID" --json conclusion --jq .conclusion)" = success
           test "$(gh run view "$RUN_ID" --json workflowName --jq .workflowName)" = 'Test and build'
+          build_sha=$(gh run view "$RUN_ID" --json headSha --jq .headSha)
+          version=$(gh api "repos/$GH_REPO/contents/pubspec.yaml?ref=$build_sha" --jq .content | base64 --decode | sed -n 's/^version: //p' | tr -d '\r')
+          test "$TAG" = "v${version%%+*}-pre-alpha"
           test "$(gh release view "$TAG" --json isDraft --jq .isDraft)" = true
           test "$(gh release view "$TAG" --json isPrerelease --jq .isPrerelease)" = true
       - uses: actions/download-artifact@v4
@@ -36,10 +38,10 @@ jobs:
       - name: Stage verified build artifacts without publishing
         run: |
           mkdir dist
-          cp artifacts/sutoriraita-windows/sutoriraita-windows.zip dist/
-          cp artifacts/sutoriraita-linux/sutoriraita-linux.tar.gz dist/
-          cp artifacts/sutoriraita-macos/sutoriraita-macos.zip dist/
-          cp artifacts/sutoriraita-ios/sutoriraita-ios-unsigned.zip dist/
-          cp artifacts/sutoriraita-android/build/app/outputs/flutter-apk/app-release.apk dist/sutoriraita-android.apk
+          cp artifacts/sutoriraita-windows/sutoriraita-windows.zip "dist/sutoriraita-$TAG-windows.zip"
+          cp artifacts/sutoriraita-linux/sutoriraita-linux.tar.gz "dist/sutoriraita-$TAG-linux.tar.gz"
+          cp artifacts/sutoriraita-macos/sutoriraita-macos.zip "dist/sutoriraita-$TAG-macos.zip"
+          cp artifacts/sutoriraita-ios/sutoriraita-ios-unsigned.zip "dist/sutoriraita-$TAG-ios-unsigned.zip"
+          cp artifacts/sutoriraita-android/build/app/outputs/flutter-apk/app-release.apk "dist/sutoriraita-$TAG-android.apk"
           (cd dist && sha256sum sutoriraita-* > SHA256SUMS)
           gh release upload "$TAG" dist/* --clobber

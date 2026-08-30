@@ -1,4 +1,4 @@
-# Building and releasing v0.0.1 pre-alpha
+# Building and releasing v0.0.2 pre-alpha
 
 Use Flutter **3.47.2 stable**, Dart **3.13.2** (bundled), and the committed
 `pubspec.lock`. Run `flutter doctor -v`, `flutter pub get`, `flutter analyze`,
@@ -60,7 +60,11 @@ Before creating a version tag and GitHub **pre-release**, review successful CI
 artifacts and record which interactive checks below were performed or remain
 unverified. A production release requires completing those checks on supported
 platforms. No workflow auto-publishes a production release. Keep `pubspec.yaml`,
-README and CHANGELOG versions aligned.
+README, CHANGELOG and the in-app version label aligned. Every distinct update gets
+a new application version and a monotonically increasing build number. The current
+release is `0.0.2+2` / `v0.0.2-pre-alpha`; retain the old `v0.0.1-pre-alpha` tag,
+notes and downloads unchanged. Project `formatVersion` is independent of the app
+version and remains **1**; this menu update needs no data migration.
 
 ## Required interactive checks
 
@@ -104,6 +108,7 @@ interactive platform testing. The Dart SAF tests use a mocked document channel.
 
 The manual **Stage pre-alpha release assets** workflow takes a successful build
 run ID and an existing draft pre-release tag, downloads all five CI artifacts,
-and uploads them with SHA256SUMS. It refuses failed builds or published/non-pre-alpha
+and uploads them with versioned filenames and SHA256SUMS. It checks that the
+release tag agrees with the selected build's pubspec version. It refuses failed builds or published/non-pre-alpha
 releases, and never publishes the draft. Review the selected build commit and
 artifact checksums before publishing the pre-release.

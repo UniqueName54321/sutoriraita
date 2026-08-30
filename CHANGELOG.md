@@ -1,12 +1,15 @@
 # Changelog
 
-## Unreleased
+## v0.0.2 pre-alpha — 2026-08-30
 
 - Group welcome-screen actions into New project, Open and Import dropdown menus.
   All existing actions remain available; future formats can be added without
   expanding the button row.
 
-## v0.0.1 pre-alpha
+- Keep the same project/container format and existing creation, opening and import behavior.
+- Increment the application version to `0.0.2+2` and update the in-app pre-alpha label.
+
+## v0.0.1 pre-alpha — 2026-08-30
 
 Initial pre-alpha release. Expect bugs and keep independent backups of your work.
 macOS and iOS have received little or no interactive testing.

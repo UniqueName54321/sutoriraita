@@ -103,6 +103,13 @@ native Screenplay/Sōhōkō-sei persistence, Fountain semantics, Ink generation,
 document-model selection, and small-phone mode editors. Windows and Android
 release builds succeeded locally as `0.1.0+5`. CI supplies the Linux, macOS, and
 unsigned iOS compile evidence and final release bundles.
+[CI run 33467728999](https://github.com/UniqueName54321/sutoriraita/actions/runs/33467728999)
+passed analysis, tests, and release builds on Windows, Linux, macOS, Android,
+and unsigned iOS from application commit
+`fba5822921dbb44b4a7e5416a21f86355b9e158c`. Staging run
+[33468167650](https://github.com/UniqueName54321/sutoriraita/actions/runs/33468167650)
+copied those exact artifacts into the draft pre-release and generated the
+published SHA-256 manifest without rebuilding or introducing signing credentials.
 
 ## v0.0.4 local verification (2026-09-01)
 

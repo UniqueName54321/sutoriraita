@@ -99,6 +99,13 @@ landscape phones, a tablet, safe-area insets, an open software keyboard, 160–2
 text scaling, project-list controls, encyclopedia layout, and drawer interaction.
 Windows and Android release builds succeeded locally as `0.0.4+4`. CI provides
 the required Linux, macOS, and unsigned iOS compile evidence and release bundles.
+[CI run 33465025981](https://github.com/UniqueName54321/sutoriraita/actions/runs/33465025981)
+passed analysis, the test suite, and release builds on Windows, macOS, Linux,
+Android, and unsigned iOS from application commit
+`b9de99d671ff370dbc4f6a6296a7cee926301eac`. Staging run
+[33465391170](https://github.com/UniqueName54321/sutoriraita/actions/runs/33465391170)
+copied those exact artifacts into the draft pre-release and generated SHA-256
+checksums; it did not rebuild or substitute signed iOS output.
 
 ## v0.0.3 transfer verification (2026-08-30)
 

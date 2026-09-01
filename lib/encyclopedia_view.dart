@@ -509,103 +509,133 @@ class _EncyclopediaEditorState extends State<EncyclopediaEditor> {
     return Column(
       children: [
         Container(
-          height: 48,
+          constraints: const BoxConstraints(minHeight: 48),
           padding: const EdgeInsets.symmetric(horizontal: 16),
           decoration: const BoxDecoration(
             color: Color(0xFFFBFAF6),
             border: Border(bottom: BorderSide(color: Color(0xFFE7E3D9))),
           ),
-          child: Row(
-            children: [
-              Icon(_iconFor(entry.type), size: 18),
-              const SizedBox(width: 8),
-              Text(
-                entry.type.label,
-                style: Theme.of(context).textTheme.labelMedium,
-              ),
-              const Spacer(),
-              if (gemmell.enabled)
-                IconButton(
-                  tooltip: '${gemmell.name} encyclopedia tools',
-                  onPressed: () => _showGemmellTools(entry),
-                  icon: const Icon(Icons.auto_awesome_outlined, size: 19),
-                ),
-              SegmentedButton<bool>(
-                segments: const [
-                  ButtonSegment(
-                    value: false,
-                    icon: Icon(Icons.edit_outlined, size: 17),
-                    label: Text('Write'),
-                  ),
-                  ButtonSegment(
-                    value: true,
-                    icon: Icon(Icons.visibility_outlined, size: 17),
-                    label: Text('View'),
-                  ),
-                ],
-                selected: {preview},
-                onSelectionChanged: (value) =>
-                    setState(() => preview = value.first),
-                showSelectedIcon: false,
-              ),
-              PopupMenuButton<String>(
-                onSelected: (value) async {
-                  if (value == 'edit') {
-                    final result = await _entryDialog(context, entry: entry);
-                    if (result != null) {
-                      widget.controller.updateEntry(
-                        entry,
-                        title: result.$1,
-                        type: result.$2,
-                      );
-                    }
-                  }
-                  if (value == 'delete' && context.mounted) {
-                    widget.controller.deleteEntry(entry);
-                  }
-                  if (value == 'generate-base' && context.mounted) {
-                    await _generateEntryBase(entry, replace: false);
-                  }
-                  if (value == 'replace-base' && context.mounted) {
-                    await _generateEntryBase(entry, replace: true);
-                  }
-                },
-                itemBuilder: (_) => [
-                  const PopupMenuItem(
-                    value: 'edit',
-                    child: Text('Edit title and type'),
-                  ),
-                  const PopupMenuDivider(),
-                  const PopupMenuItem(
-                    value: 'generate-base',
-                    child: ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      leading: Icon(Icons.auto_fix_high_outlined),
-                      title: Text('Generate starter from facts'),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final compact = constraints.maxWidth < 700;
+              return Row(
+                children: [
+                  Icon(_iconFor(entry.type), size: 18),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      entry.type.label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.labelMedium,
                     ),
                   ),
-                  PopupMenuItem(
-                    value: 'replace-base',
-                    enabled: textController.text.trim().isNotEmpty,
-                    child: const ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      leading: Icon(Icons.restart_alt),
-                      title: Text('Replace with generated base'),
+                  if (gemmell.enabled)
+                    IconButton(
+                      tooltip: '${gemmell.name} encyclopedia tools',
+                      onPressed: () => _showGemmellTools(entry),
+                      icon: const Icon(Icons.auto_awesome_outlined, size: 19),
                     ),
-                  ),
-                  const PopupMenuDivider(),
-                  const PopupMenuItem(
-                    value: 'delete',
-                    child: Text('Delete entry'),
+                  if (compact) ...[
+                    IconButton(
+                      tooltip: 'Write',
+                      isSelected: !preview,
+                      onPressed: () => setState(() => preview = false),
+                      icon: const Icon(Icons.edit_outlined, size: 19),
+                    ),
+                    IconButton(
+                      tooltip: 'View',
+                      isSelected: preview,
+                      onPressed: () => setState(() => preview = true),
+                      icon: const Icon(Icons.visibility_outlined, size: 19),
+                    ),
+                  ] else
+                    SegmentedButton<bool>(
+                      segments: const [
+                        ButtonSegment(
+                          value: false,
+                          icon: Icon(Icons.edit_outlined, size: 17),
+                          label: Text('Write'),
+                        ),
+                        ButtonSegment(
+                          value: true,
+                          icon: Icon(Icons.visibility_outlined, size: 17),
+                          label: Text('View'),
+                        ),
+                      ],
+                      selected: {preview},
+                      onSelectionChanged: (value) =>
+                          setState(() => preview = value.first),
+                      showSelectedIcon: false,
+                    ),
+                  PopupMenuButton<String>(
+                    onSelected: (value) async {
+                      if (value == 'edit') {
+                        final result = await _entryDialog(
+                          context,
+                          entry: entry,
+                        );
+                        if (result != null) {
+                          widget.controller.updateEntry(
+                            entry,
+                            title: result.$1,
+                            type: result.$2,
+                          );
+                        }
+                      }
+                      if (value == 'delete' && context.mounted) {
+                        widget.controller.deleteEntry(entry);
+                      }
+                      if (value == 'generate-base' && context.mounted) {
+                        await _generateEntryBase(entry, replace: false);
+                      }
+                      if (value == 'replace-base' && context.mounted) {
+                        await _generateEntryBase(entry, replace: true);
+                      }
+                    },
+                    itemBuilder: (_) => [
+                      const PopupMenuItem(
+                        value: 'edit',
+                        child: Text('Edit title and type'),
+                      ),
+                      const PopupMenuDivider(),
+                      const PopupMenuItem(
+                        value: 'generate-base',
+                        child: ListTile(
+                          contentPadding: EdgeInsets.zero,
+                          leading: Icon(Icons.auto_fix_high_outlined),
+                          title: Text('Generate starter from facts'),
+                        ),
+                      ),
+                      PopupMenuItem(
+                        value: 'replace-base',
+                        enabled: textController.text.trim().isNotEmpty,
+                        child: const ListTile(
+                          contentPadding: EdgeInsets.zero,
+                          leading: Icon(Icons.restart_alt),
+                          title: Text('Replace with generated base'),
+                        ),
+                      ),
+                      const PopupMenuDivider(),
+                      const PopupMenuItem(
+                        value: 'delete',
+                        child: Text('Delete entry'),
+                      ),
+                    ],
                   ),
                 ],
-              ),
-            ],
+              );
+            },
           ),
         ),
         Expanded(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(32, 34, 32, 100),
+            padding: EdgeInsets.fromLTRB(
+              MediaQuery.sizeOf(context).width < 700 ? 16 : 32,
+              MediaQuery.sizeOf(context).width < 700 ? 20 : 34,
+              MediaQuery.sizeOf(context).width < 700 ? 16 : 32,
+              100,
+            ),
             child: Center(
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 760),
@@ -656,14 +686,17 @@ class _EncyclopediaEditorState extends State<EncyclopediaEditor> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Row(
+                            Wrap(
+                              alignment: WrapAlignment.spaceBetween,
+                              crossAxisAlignment: WrapCrossAlignment.center,
+                              spacing: 12,
+                              runSpacing: 4,
                               children: [
                                 Text(
                                   'Structured facts',
                                   style: Theme.of(context).textTheme.titleLarge
                                       ?.copyWith(fontSize: 17),
                                 ),
-                                const Spacer(),
                                 TextButton.icon(
                                   onPressed: () => _addCustomField(entry),
                                   icon: const Icon(Icons.add, size: 17),
@@ -713,14 +746,17 @@ class _EncyclopediaEditorState extends State<EncyclopediaEditor> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Row(
+                            Wrap(
+                              alignment: WrapAlignment.spaceBetween,
+                              crossAxisAlignment: WrapCrossAlignment.center,
+                              spacing: 12,
+                              runSpacing: 4,
                               children: [
                                 Text(
                                   'Relations',
                                   style: Theme.of(context).textTheme.titleLarge
                                       ?.copyWith(fontSize: 17),
                                 ),
-                                const Spacer(),
                                 TextButton.icon(
                                   onPressed: () => _addRelation(entry),
                                   icon: const Icon(Icons.add_link, size: 17),

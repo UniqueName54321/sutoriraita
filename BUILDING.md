@@ -1,4 +1,4 @@
-# Building and releasing v0.0.3 pre-alpha
+# Building and releasing v0.0.4 pre-alpha
 
 Use Flutter **3.47.2 stable**, Dart **3.13.2** (bundled), and the committed
 `pubspec.lock`. Run `flutter doctor -v`, `flutter pub get`, `flutter analyze`,
@@ -62,7 +62,7 @@ unverified. A production release requires completing those checks on supported
 platforms. No workflow auto-publishes a production release. Keep `pubspec.yaml`,
 README, CHANGELOG and the in-app version label aligned. Every distinct update gets
 a new application version and a monotonically increasing build number. The current
-release is `0.0.3+3` / `v0.0.3-pre-alpha`; retain the old v0.0.1 and v0.0.2 tags,
+release is `0.0.4+4` / `v0.0.4-pre-alpha`; retain the old v0.0.1 through v0.0.3 tags,
 notes and downloads unchanged. Project `formatVersion` is independent of the app
 version and remains **1**; this update needs no native data migration.
 
@@ -90,6 +90,15 @@ provider write must be treated as a save failure. Re-select folders after access
 is revoked or a provider moves them. Native folder/provider integration is not
 covered by the mocked Dart channel tests and needs the device checks above.
 
+## v0.0.4 local verification (2026-09-01)
+
+`flutter analyze` passed, and all **44 runnable tests passed** serially; the one
+optional supplied-Hammer-example check remains skipped unless
+`SUTORIRAITA_HAMMER_EXAMPLES` is set. Responsive widget tests cover portrait and
+landscape phones, a tablet, safe-area insets, an open software keyboard, 160–200%
+text scaling, project-list controls, encyclopedia layout, and drawer interaction.
+Windows and Android release builds succeeded locally as `0.0.4+4`. CI provides
+the required Linux, macOS, and unsigned iOS compile evidence and release bundles.
 
 ## v0.0.3 transfer verification (2026-08-30)
 

@@ -40,7 +40,9 @@ jobs:
           cache: true
       - run: flutter pub get
       - run: flutter analyze
-      - run: flutter test
+      # Run serially: the startup-import widget test performs real temporary-file
+      # I/O and can exceed its UI timeout when several test isolates build at once.
+      - run: flutter test --concurrency=1
       - name: Build Windows
         if: matrix.platform == 'windows'
         run: |

@@ -1,13 +1,16 @@
 # Sutōrīraitā
 
-**v0.0.3 pre-alpha — expect bugs.** Do not trust this program with the only copy
+**v0.0.4 pre-alpha — expect bugs.** Do not trust this program with the only copy
 of your writing. Keep independent backups. macOS and iOS are untested or rarely
 tested and are especially likely to have bugs, even when their builds compile.
 
-The **v0.0.3 update** adds Hammer story import/export, startup import consent,
-and Novelist story export. The dropdown redesign was released separately in v0.0.2. Existing projects remain compatible; no migration is needed.
+The **v0.0.4 update** makes the phone and tablet interface responsive to small
+screens, landscape orientation, safe areas, keyboards, and larger text. It is the
+final planned pre-alpha update before v0.1.0. Existing projects remain compatible;
+no migration is needed. Hammer transfer remains available from v0.0.3, and the
+dropdown redesign was released separately in v0.0.2.
 See [CHANGELOG.md](CHANGELOG.md) for the changes in each version, or
-[download v0.0.3 pre-alpha](https://github.com/UniqueName54321/sutoriraita/releases/tag/v0.0.3-pre-alpha).
+[download v0.0.4 pre-alpha](https://github.com/UniqueName54321/sutoriraita/releases/tag/v0.0.4-pre-alpha).
 
 A calm, local-first story-writing workspace targeting Windows, Android, Linux,
 macOS and iOS.
@@ -15,18 +18,25 @@ macOS and iOS.
 ## Download the app
 
 You do not need to build the app yourself. The latest published builds are
-**v0.0.3 pre-alpha**:
+**v0.0.4 pre-alpha**:
 
 <!-- Update the version and every asset link below when publishing a new release. -->
 
 | Platform | Download | Getting started |
 | --- | --- | --- |
-| Windows (64-bit) | [Download ZIP](https://github.com/UniqueName54321/sutoriraita/releases/download/v0.0.3-pre-alpha/sutoriraita-v0.0.3-pre-alpha-windows.zip) | Extract the **whole ZIP**, then run `sutoriraita.exe`. Keep its accompanying files together. |
-| macOS | [Download app ZIP](https://github.com/UniqueName54321/sutoriraita/releases/download/v0.0.3-pre-alpha/sutoriraita-v0.0.3-pre-alpha-macos.zip) | Extract and move `sutoriraita.app` to Applications. This build is unnotarized, so macOS may block it. |
-| Linux (x86-64) | [Download tar.gz](https://github.com/UniqueName54321/sutoriraita/releases/download/v0.0.3-pre-alpha/sutoriraita-v0.0.3-pre-alpha-linux.tar.gz) | Extract the full archive, then run `sutoriraita`. Run `sh install.sh` to add desktop/file-type integration. Requires GTK 3. |
-| Android | [Download APK](https://github.com/UniqueName54321/sutoriraita/releases/download/v0.0.3-pre-alpha/sutoriraita-v0.0.3-pre-alpha-android.apk) | Open the APK on your device and allow installation from that source when prompted. This is a development-signed build. |
-| iOS | [Download unsigned app ZIP](https://github.com/UniqueName54321/sutoriraita/releases/download/v0.0.3-pre-alpha/sutoriraita-v0.0.3-pre-alpha-ios-unsigned.zip) | **Not ready to install.** Apple signing and provisioning are required; there is no signed IPA or TestFlight release yet. |
+| Windows (64-bit) | [Download ZIP](https://github.com/UniqueName54321/sutoriraita/releases/download/v0.0.4-pre-alpha/sutoriraita-v0.0.4-pre-alpha-windows.zip) | Extract the **whole ZIP**, then run `sutoriraita.exe`. Keep its accompanying files together. |
+| macOS | [Download app ZIP](https://github.com/UniqueName54321/sutoriraita/releases/download/v0.0.4-pre-alpha/sutoriraita-v0.0.4-pre-alpha-macos.zip) | Extract and move `sutoriraita.app` to Applications. This build is unnotarized, so macOS may block it. |
+| Linux (x86-64) | [Download tar.gz](https://github.com/UniqueName54321/sutoriraita/releases/download/v0.0.4-pre-alpha/sutoriraita-v0.0.4-pre-alpha-linux.tar.gz) | Extract the full archive, then run `sutoriraita`. Run `sh install.sh` to add desktop/file-type integration. Requires GTK 3. |
+| Android | [Download APK](https://github.com/UniqueName54321/sutoriraita/releases/download/v0.0.4-pre-alpha/sutoriraita-v0.0.4-pre-alpha-android.apk) | Open the APK on your device and allow installation from that source when prompted. This is a development-signed build. |
+| iOS | [Download unsigned app ZIP](https://github.com/UniqueName54321/sutoriraita/releases/download/v0.0.4-pre-alpha/sutoriraita-v0.0.4-pre-alpha-ios-unsigned.zip) | **Not ready to install.** Apple signing and provisioning are required; there is no signed IPA or TestFlight release yet. |
 
+<<<<<<< HEAD
+=======
+Downloads currently require a GitHub account with access to this **private
+repository**. See the [release notes](https://github.com/UniqueName54321/sutoriraita/releases/tag/v0.0.4-pre-alpha)
+and [SHA-256 checksums](https://github.com/UniqueName54321/sutoriraita/releases/download/v0.0.4-pre-alpha/SHA256SUMS).
+
+>>>>>>> a23ee57 (Release v0.0.4 responsive mobile UI)
 **Android upgrades:** development signing keys can differ between builds, preventing
 an in-place upgrade. Back up your projects before uninstalling an existing version:
 uninstalling removes its app-private project library.

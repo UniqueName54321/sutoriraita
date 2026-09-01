@@ -538,7 +538,7 @@ class WelcomeScreen extends StatelessWidget {
                         _ProjectLibrary(controller: controller),
                         const SizedBox(height: 46),
                         const Text(
-                          'VERSION 0.0.3  •  PRE-ALPHA',
+                          'VERSION 0.0.4  •  PRE-ALPHA',
                           style: TextStyle(
                             fontFamily: 'Segoe UI',
                             fontSize: 11,
@@ -680,17 +680,21 @@ class _ProjectLibraryState extends State<_ProjectLibrary> {
                   ),
                 ),
               ),
-              DropdownButton<String>(
-                value: sort,
-                items: const [
-                  DropdownMenuItem(
-                    value: 'updated',
-                    child: Text('Newest first'),
-                  ),
-                  DropdownMenuItem(value: 'title', child: Text('Title A–Z')),
-                  DropdownMenuItem(value: 'words', child: Text('Most words')),
-                ],
-                onChanged: (value) => setState(() => sort = value ?? sort),
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 260),
+                child: DropdownButton<String>(
+                  isExpanded: true,
+                  value: sort,
+                  items: const [
+                    DropdownMenuItem(
+                      value: 'updated',
+                      child: Text('Newest first'),
+                    ),
+                    DropdownMenuItem(value: 'title', child: Text('Title A–Z')),
+                    DropdownMenuItem(value: 'words', child: Text('Most words')),
+                  ],
+                  onChanged: (value) => setState(() => sort = value ?? sort),
+                ),
               ),
               FilterChip(
                 selected: showArchived,
@@ -838,12 +842,22 @@ class WorkspaceScreen extends StatefulWidget {
 
 class _WorkspaceScreenState extends State<WorkspaceScreen> {
   bool sidebarOpen = true;
+  final scaffoldKey = GlobalKey<ScaffoldState>();
+
+  void _toggleSidebar(bool narrow) {
+    if (narrow) {
+      scaffoldKey.currentState?.openDrawer();
+    } else {
+      setState(() => sidebarOpen = !sidebarOpen);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final narrow = MediaQuery.sizeOf(context).width < 760;
     final sidebar = ManuscriptSidebar(
       controller: widget.controller,
-      onClose: narrow ? () => Navigator.pop(context) : null,
+      onClose: narrow ? () => scaffoldKey.currentState?.closeDrawer() : null,
     );
     return Shortcuts(
       shortcuts: const {
@@ -870,45 +884,35 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
             },
           ),
         },
-        child: Builder(
-          builder: (scaffoldContext) => Scaffold(
-            drawer: narrow
-                ? Drawer(width: 310, child: SafeArea(child: sidebar))
-                : null,
-            body: SafeArea(
-              child: Row(
-                children: [
-                  if (!narrow && sidebarOpen)
-                    SizedBox(width: 300, child: sidebar),
-                  Expanded(
-                    child: Column(
-                      children: [
-                        WorkspaceTopBar(
-                          controller: widget.controller,
-                          onMenu: () {
-                            if (narrow) {
-                              Scaffold.of(scaffoldContext).openDrawer();
-                            } else {
-                              setState(() => sidebarOpen = !sidebarOpen);
-                            }
-                          },
-                        ),
-                        Expanded(
-                          child:
-                              widget.controller.area ==
-                                  WorkspaceArea.encyclopedia
-                              ? EncyclopediaEditor(
-                                  controller: widget.controller,
-                                )
-                              : widget.controller.selectedScene == null
-                              ? const EmptyManuscript()
-                              : SceneEditor(controller: widget.controller),
-                        ),
-                      ],
-                    ),
+        child: Scaffold(
+          key: scaffoldKey,
+          drawer: narrow
+              ? Drawer(width: 310, child: SafeArea(child: sidebar))
+              : null,
+          body: SafeArea(
+            child: Row(
+              children: [
+                if (!narrow && sidebarOpen)
+                  SizedBox(width: 300, child: sidebar),
+                Expanded(
+                  child: Column(
+                    children: [
+                      WorkspaceTopBar(
+                        controller: widget.controller,
+                        onMenu: () => _toggleSidebar(narrow),
+                      ),
+                      Expanded(
+                        child:
+                            widget.controller.area == WorkspaceArea.encyclopedia
+                            ? EncyclopediaEditor(controller: widget.controller)
+                            : widget.controller.selectedScene == null
+                            ? const EmptyManuscript()
+                            : SceneEditor(controller: widget.controller),
+                      ),
+                    ],
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ),
@@ -927,7 +931,7 @@ class WorkspaceTopBar extends StatelessWidget {
   final VoidCallback onMenu;
   @override
   Widget build(BuildContext context) => Container(
-    height: 66,
+    constraints: const BoxConstraints(minHeight: 66),
     padding: const EdgeInsets.symmetric(horizontal: 12),
     decoration: const BoxDecoration(
       border: Border(bottom: BorderSide(color: Color(0xFFE4E0D6))),
@@ -998,106 +1002,126 @@ class ManuscriptSidebar extends StatelessWidget {
   final ProjectController controller;
   final VoidCallback? onClose;
   @override
-  Widget build(BuildContext context) => Container(
-    color: const Color(0xFFF0EEE7),
-    child: Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(18, 23, 12, 12),
-          child: Row(
-            children: [
-              const Expanded(child: _BrandMark()),
-              if (onClose != null)
-                IconButton(onPressed: onClose, icon: const Icon(Icons.close)),
-            ],
-          ),
-        ),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
-          child: SegmentedButton<WorkspaceArea>(
-            segments: const [
-              ButtonSegment(
-                value: WorkspaceArea.manuscript,
-                icon: Icon(Icons.description_outlined, size: 17),
-                label: Text('Story'),
-              ),
-              ButtonSegment(
-                value: WorkspaceArea.encyclopedia,
-                icon: Icon(Icons.menu_book_outlined, size: 17),
-                label: Text('Lore'),
-              ),
-            ],
-            selected: {controller.area},
-            showSelectedIcon: false,
-            onSelectionChanged: (value) => controller.showArea(value.first),
-          ),
-        ),
-        if (controller.area == WorkspaceArea.manuscript) ...[
+  Widget build(BuildContext context) {
+    final short = MediaQuery.sizeOf(context).height < 500;
+    return Material(
+      color: const Color(0xFFF0EEE7),
+      child: Column(
+        children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(20, 8, 12, 6),
+            padding: EdgeInsets.fromLTRB(
+              18,
+              short ? 6 : 23,
+              12,
+              short ? 2 : 12,
+            ),
             child: Row(
               children: [
-                Expanded(
-                  child: Text(
-                    'MANUSCRIPT',
-                    style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                      fontSize: 11,
-                      letterSpacing: 1.3,
-                      color: const Color(0xFF777368),
-                    ),
+                const Expanded(child: _BrandMark()),
+                if (onClose != null)
+                  IconButton(
+                    onPressed: onClose,
+                    tooltip: 'Close manuscript',
+                    icon: const Icon(Icons.close),
                   ),
-                ),
-                IconButton(
-                  onPressed: controller.addSection,
-                  tooltip: 'New chapter',
-                  visualDensity: VisualDensity.compact,
-                  icon: const Icon(Icons.create_new_folder_outlined, size: 19),
-                ),
               ],
             ),
           ),
-          Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.fromLTRB(8, 0, 8, 18),
-              itemCount: controller.project!.sections.length,
-              itemBuilder: (context, index) => SectionTile(
-                section: controller.project!.sections[index],
+          Padding(
+            padding: EdgeInsets.fromLTRB(12, short ? 2 : 8, 12, short ? 2 : 8),
+            child: SegmentedButton<WorkspaceArea>(
+              segments: const [
+                ButtonSegment(
+                  value: WorkspaceArea.manuscript,
+                  icon: Icon(Icons.description_outlined, size: 17),
+                  label: Text('Story'),
+                ),
+                ButtonSegment(
+                  value: WorkspaceArea.encyclopedia,
+                  icon: Icon(Icons.menu_book_outlined, size: 17),
+                  label: Text('Lore'),
+                ),
+              ],
+              selected: {controller.area},
+              showSelectedIcon: false,
+              onSelectionChanged: (value) => controller.showArea(value.first),
+            ),
+          ),
+          if (controller.area == WorkspaceArea.manuscript) ...[
+            Padding(
+              padding: EdgeInsets.fromLTRB(
+                20,
+                short ? 2 : 8,
+                12,
+                short ? 0 : 6,
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      'MANUSCRIPT',
+                      style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                        fontSize: 11,
+                        letterSpacing: 1.3,
+                        color: const Color(0xFF777368),
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: controller.addSection,
+                    tooltip: 'New chapter',
+                    visualDensity: VisualDensity.compact,
+                    icon: const Icon(
+                      Icons.create_new_folder_outlined,
+                      size: 19,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Expanded(
+              child: ListView.builder(
+                padding: const EdgeInsets.fromLTRB(8, 0, 8, 18),
+                itemCount: controller.project!.sections.length,
+                itemBuilder: (context, index) => SectionTile(
+                  section: controller.project!.sections[index],
+                  controller: controller,
+                  onSelected: onClose,
+                ),
+              ),
+            ),
+          ] else
+            Expanded(
+              child: EncyclopediaSidebar(
                 controller: controller,
                 onSelected: onClose,
               ),
             ),
-          ),
-        ] else
-          Expanded(
-            child: EncyclopediaSidebar(
-              controller: controller,
-              onSelected: onClose,
+          Container(
+            padding: EdgeInsets.all(short ? 8 : 18),
+            decoration: const BoxDecoration(
+              border: Border(top: BorderSide(color: Color(0xFFDEDACF))),
+            ),
+            child: Row(
+              children: [
+                const Icon(
+                  Icons.auto_stories_outlined,
+                  size: 18,
+                  color: Color(0xFF777368),
+                ),
+                const SizedBox(width: 9),
+                Text(
+                  '${controller.project!.wordCount} words',
+                  style: Theme.of(context).textTheme.labelMedium
+                      ?.copyWith(color: const Color(0xFF777368)),
+                ),
+              ],
             ),
           ),
-        Container(
-          padding: const EdgeInsets.all(18),
-          decoration: const BoxDecoration(
-            border: Border(top: BorderSide(color: Color(0xFFDEDACF))),
-          ),
-          child: Row(
-            children: [
-              const Icon(
-                Icons.auto_stories_outlined,
-                size: 18,
-                color: Color(0xFF777368),
-              ),
-              const SizedBox(width: 9),
-              Text(
-                '${controller.project!.wordCount} words',
-                style: Theme.of(context).textTheme.labelMedium
-                    ?.copyWith(color: const Color(0xFF777368)),
-              ),
-            ],
-          ),
-        ),
-      ],
-    ),
-  );
+        ],
+      ),
+    );
+  }
 }
 
 class SectionTile extends StatelessWidget {
@@ -1654,6 +1678,176 @@ class _SceneEditorState extends State<SceneEditor> {
     );
   }
 
+  Future<void> _commonMarkAction(String value, StoryScene scene) async {
+    switch (value) {
+      case 'heading':
+        _heading();
+      case 'quote':
+        _prefixLines('> ');
+      case 'list':
+        _prefixLines('- ');
+      case 'code':
+        _wrap('`');
+      case 'link':
+        final selection = textController.selection;
+        final label = selection.isValid
+            ? selection.textInside(textController.text)
+            : '';
+        _insert('[${label.isEmpty ? 'link text' : label}](https://)');
+      case 'scene-link':
+        await _insertSceneLink(scene);
+      case 'rule':
+        _insert('\n\n---\n\n');
+    }
+  }
+
+  Widget _commonMarkMenu(StoryScene scene) => PopupMenuButton<String>(
+    enabled: !preview,
+    tooltip: 'More CommonMark',
+    icon: const Icon(Icons.add_box_outlined, size: 19),
+    onSelected: (value) => _commonMarkAction(value, scene),
+    itemBuilder: (_) => const [
+      PopupMenuItem(value: 'heading', child: Text('Heading')),
+      PopupMenuItem(value: 'quote', child: Text('Block quote')),
+      PopupMenuItem(value: 'list', child: Text('Bulleted list')),
+      PopupMenuItem(value: 'code', child: Text('Inline code')),
+      PopupMenuItem(value: 'link', child: Text('Link')),
+      PopupMenuItem(value: 'scene-link', child: Text('Internal scene link')),
+      PopupMenuItem(value: 'rule', child: Text('Horizontal rule')),
+    ],
+  );
+
+  Widget _mobileSceneToolbar(StoryScene scene, List<SpellingIssue> spelling) =>
+      Row(
+        children: [
+          IconButton(
+            onPressed: preview ? null : () => _wrap('**'),
+            tooltip: 'Bold (Ctrl+B)',
+            icon: const Icon(Icons.format_bold, size: 19),
+          ),
+          IconButton(
+            onPressed: preview ? null : () => _wrap('*'),
+            tooltip: 'Italic (Ctrl+I)',
+            icon: const Icon(Icons.format_italic, size: 19),
+          ),
+          _commonMarkMenu(scene),
+          const Spacer(),
+          IconButton(
+            isSelected: !preview,
+            tooltip: 'Write',
+            onPressed: () => setState(() => preview = false),
+            icon: const Icon(Icons.edit_outlined, size: 19),
+            selectedIcon: const Icon(Icons.edit, size: 19),
+          ),
+          IconButton(
+            isSelected: preview,
+            tooltip: 'View',
+            onPressed: () => setState(() => preview = true),
+            icon: const Icon(Icons.visibility_outlined, size: 19),
+            selectedIcon: const Icon(Icons.visibility, size: 19),
+          ),
+          PopupMenuButton<String>(
+            tooltip: 'Editor tools',
+            icon: Badge(
+              isLabelVisible: spelling.isNotEmpty,
+              label: Text('${spelling.length}'),
+              child: const Icon(Icons.more_vert, size: 20),
+            ),
+            onSelected: (value) {
+              if (value == 'spelling') {
+                setState(() => showSpelling = !showSpelling);
+              } else if (value == 'gemmell') {
+                _showSceneTools(scene);
+              }
+            },
+            itemBuilder: (_) => [
+              PopupMenuItem(
+                value: 'spelling',
+                child: ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: const Icon(Icons.spellcheck_outlined),
+                  title: Text(showSpelling ? 'Hide spelling' : 'Show spelling'),
+                  subtitle: Text('${spelling.length} suggestion(s)'),
+                ),
+              ),
+              if (gemmell.enabled)
+                PopupMenuItem(
+                  value: 'gemmell',
+                  child: ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: const Icon(Icons.auto_awesome_outlined),
+                    title: Text('${gemmell.name} tools'),
+                  ),
+                ),
+            ],
+          ),
+        ],
+      );
+
+  Widget _desktopSceneToolbar(StoryScene scene, List<SpellingIssue> spelling) =>
+      Row(
+        children: [
+          IconButton(
+            onPressed: preview ? null : () => _wrap('**'),
+            tooltip: 'Bold (Ctrl+B)',
+            icon: const Icon(Icons.format_bold, size: 19),
+          ),
+          IconButton(
+            onPressed: preview ? null : () => _wrap('*'),
+            tooltip: 'Italic (Ctrl+I)',
+            icon: const Icon(Icons.format_italic, size: 19),
+          ),
+          IconButton(
+            onPressed: preview ? null : _heading,
+            tooltip: 'Heading',
+            icon: const Icon(Icons.title, size: 20),
+          ),
+          _commonMarkMenu(scene),
+          const Spacer(),
+          IconButton(
+            tooltip: spelling.isEmpty
+                ? 'Deterministic spellcheck: no issues'
+                : 'Spellcheck: ${spelling.length} suggestion(s)',
+            onPressed: () => setState(() => showSpelling = !showSpelling),
+            icon: Badge(
+              isLabelVisible: spelling.isNotEmpty,
+              label: Text('${spelling.length}'),
+              child: const Icon(Icons.spellcheck_outlined, size: 19),
+            ),
+          ),
+          if (gemmell.enabled)
+            IconButton(
+              tooltip: '${gemmell.name} tools',
+              icon: const Icon(Icons.auto_awesome_outlined, size: 19),
+              onPressed: () => _showSceneTools(scene),
+            ),
+          SegmentedButton<bool>(
+            segments: const [
+              ButtonSegment(
+                value: false,
+                icon: Icon(Icons.edit_outlined, size: 16),
+                label: Text('Write'),
+              ),
+              ButtonSegment(
+                value: true,
+                icon: Icon(Icons.visibility_outlined, size: 16),
+                label: Text('View'),
+              ),
+            ],
+            selected: {preview},
+            showSelectedIcon: false,
+            onSelectionChanged: (value) =>
+                setState(() => preview = value.first),
+          ),
+          const SizedBox(width: 14),
+          Text(
+            '${scene.wordCount} words',
+            style: Theme.of(context).textTheme.labelMedium
+                ?.copyWith(color: const Color(0xFF7C786E)),
+          ),
+        ],
+      );
+
   @override
   void dispose() {
     textController.removeListener(_changed);
@@ -1671,117 +1865,16 @@ class _SceneEditorState extends State<SceneEditor> {
     return Column(
       children: [
         Container(
-          height: 48,
-          padding: const EdgeInsets.symmetric(horizontal: 14),
+          constraints: const BoxConstraints(minHeight: 48),
+          padding: const EdgeInsets.symmetric(horizontal: 8),
           decoration: const BoxDecoration(
             color: Color(0xFFFBFAF6),
             border: Border(bottom: BorderSide(color: Color(0xFFE7E3D9))),
           ),
-          child: Row(
-            children: [
-              IconButton(
-                onPressed: preview ? null : () => _wrap('**'),
-                tooltip: 'Bold (Ctrl+B)',
-                icon: const Icon(Icons.format_bold, size: 19),
-              ),
-              IconButton(
-                onPressed: preview ? null : () => _wrap('*'),
-                tooltip: 'Italic (Ctrl+I)',
-                icon: const Icon(Icons.format_italic, size: 19),
-              ),
-              IconButton(
-                onPressed: preview ? null : _heading,
-                tooltip: 'Heading',
-                icon: const Icon(Icons.title, size: 20),
-              ),
-              PopupMenuButton<String>(
-                enabled: !preview,
-                tooltip: 'More CommonMark',
-                icon: const Icon(Icons.add_box_outlined, size: 19),
-                onSelected: (value) async {
-                  switch (value) {
-                    case 'quote':
-                      _prefixLines('> ');
-                      break;
-                    case 'list':
-                      _prefixLines('- ');
-                      break;
-                    case 'code':
-                      _wrap('`');
-                      break;
-                    case 'link':
-                      final selection = textController.selection;
-                      final label = selection.isValid
-                          ? selection.textInside(textController.text)
-                          : '';
-                      _insert(
-                        '[${label.isEmpty ? 'link text' : label}](https://)',
-                      );
-                      break;
-                    case 'scene-link':
-                      await _insertSceneLink(scene);
-                      break;
-                    case 'rule':
-                      _insert('\n\n---\n\n');
-                      break;
-                  }
-                },
-                itemBuilder: (_) => const [
-                  PopupMenuItem(value: 'quote', child: Text('Block quote')),
-                  PopupMenuItem(value: 'list', child: Text('Bulleted list')),
-                  PopupMenuItem(value: 'code', child: Text('Inline code')),
-                  PopupMenuItem(value: 'link', child: Text('Link')),
-                  PopupMenuItem(
-                    value: 'scene-link',
-                    child: Text('Internal scene link'),
-                  ),
-                  PopupMenuItem(value: 'rule', child: Text('Horizontal rule')),
-                ],
-              ),
-              const Spacer(),
-              IconButton(
-                tooltip: spelling.isEmpty
-                    ? 'Deterministic spellcheck: no issues'
-                    : 'Spellcheck: ${spelling.length} suggestion(s)',
-                onPressed: () => setState(() => showSpelling = !showSpelling),
-                icon: Badge(
-                  isLabelVisible: spelling.isNotEmpty,
-                  label: Text('${spelling.length}'),
-                  child: const Icon(Icons.spellcheck_outlined, size: 19),
-                ),
-              ),
-              if (gemmell.enabled)
-                IconButton(
-                  tooltip: '${gemmell.name} tools',
-                  icon: const Icon(Icons.auto_awesome_outlined, size: 19),
-                  onPressed: () => _showSceneTools(scene),
-                ),
-              SegmentedButton<bool>(
-                segments: const [
-                  ButtonSegment(
-                    value: false,
-                    icon: Icon(Icons.edit_outlined, size: 16),
-                    label: Text('Write'),
-                  ),
-                  ButtonSegment(
-                    value: true,
-                    icon: Icon(Icons.visibility_outlined, size: 16),
-                    label: Text('View'),
-                  ),
-                ],
-                selected: {preview},
-                showSelectedIcon: false,
-                onSelectionChanged: (value) =>
-                    setState(() => preview = value.first),
-              ),
-              const SizedBox(width: 14),
-              if (MediaQuery.sizeOf(context).width > 620)
-                Text(
-                  '${scene.wordCount} words',
-                  style: Theme.of(context).textTheme.labelMedium
-                      ?.copyWith(color: const Color(0xFF7C786E)),
-                ),
-            ],
+          child: LayoutBuilder(
+            builder: (context, constraints) => constraints.maxWidth < 700
+                ? _mobileSceneToolbar(scene, spelling)
+                : _desktopSceneToolbar(scene, spelling),
           ),
         ),
         Expanded(
@@ -2592,12 +2685,16 @@ class _BrandMark extends StatelessWidget {
         ),
       ),
       SizedBox(width: large ? 13 : 10),
-      Text(
-        'Sutōrīraitā',
-        style: TextStyle(
-          fontSize: large ? 24 : 18,
-          fontWeight: FontWeight.w700,
-          letterSpacing: -.3,
+      Flexible(
+        child: Text(
+          'Sutōrīraitā',
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(
+            fontSize: large ? 24 : 18,
+            fontWeight: FontWeight.w700,
+            letterSpacing: -.3,
+          ),
         ),
       ),
     ],

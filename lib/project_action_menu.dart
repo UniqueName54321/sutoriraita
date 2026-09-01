@@ -29,28 +29,33 @@ class ProjectActionMenu extends StatelessWidget {
     builder: (context, controller, child) {
       void toggle() =>
           controller.isOpen ? controller.close() : controller.open();
+      final compact =
+          MediaQuery.sizeOf(context).width < 400 &&
+          MediaQuery.textScalerOf(context).scale(14) > 18;
       final content = Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(label),
-          const SizedBox(width: 8),
+          if (!compact) ...[Text(label), const SizedBox(width: 8)],
           const Icon(Icons.expand_more, size: 18),
         ],
       );
       const padding = EdgeInsets.symmetric(horizontal: 18, vertical: 17);
-      return primary
-          ? FilledButton.icon(
-              onPressed: toggle,
-              icon: Icon(icon, size: 20),
-              label: content,
-              style: FilledButton.styleFrom(padding: padding),
-            )
-          : OutlinedButton.icon(
-              onPressed: toggle,
-              icon: Icon(icon, size: 20),
-              label: content,
-              style: OutlinedButton.styleFrom(padding: padding),
-            );
+      return Tooltip(
+        message: label,
+        child: primary
+            ? FilledButton.icon(
+                onPressed: toggle,
+                icon: Icon(icon, size: 20),
+                label: content,
+                style: FilledButton.styleFrom(padding: padding),
+              )
+            : OutlinedButton.icon(
+                onPressed: toggle,
+                icon: Icon(icon, size: 20),
+                label: content,
+                style: OutlinedButton.styleFrom(padding: padding),
+              ),
+      );
     },
   );
 }

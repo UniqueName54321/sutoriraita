@@ -1,5 +1,22 @@
 # Changelog
 
+## v0.0.4 pre-alpha — 2026-09-01
+
+- Make the workspace, project list, encyclopedia, dialogs, and editor respond to
+  small phone/tablet viewports, landscape orientation, safe areas, keyboards,
+  and enlarged text without hiding controls or content.
+- Open and close the mobile manuscript drawer through the workspace Scaffold key,
+  removing the unreliable context above the Scaffold.
+- Replace overflowing mobile Scene Editor and encyclopedia toolbars with compact
+  icon actions and overflow menus while preserving the existing desktop layout.
+- Keep project actions compact at high text scaling and allow project filters and
+  section headers to wrap within narrow screens.
+- Add widget coverage at 320×568, 568×320, 360×640, and 600×960 with safe-area,
+  keyboard, and 160–200% text scaling checks, including a real drawer interaction.
+- Increment app version/build to `0.0.4+4`; native project format remains 1.
+
+This is the final planned pre-alpha update before v0.1.0.
+
 ## v0.0.3 pre-alpha — 2026-08-30
 
 - Import Hammer dataVersion-2 story folders and ZIPs, including Android document-tree

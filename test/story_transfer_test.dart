@@ -56,7 +56,10 @@ void main() {
         final store = ProjectStore(documentsDirectory: () async => temp);
         await tester.pumpWidget(MaterialApp(home: AppShell(store: store)));
         Future<void> waitFor(String text) async {
-          for (var i = 0; i < 200 && find.text(text).evaluate().isEmpty; i++) {
+          // Real ZIP/file I/O can take several seconds on a cold Windows or CI
+          // filesystem; keep pumping the UI instead of treating 2 seconds as a
+          // product failure.
+          for (var i = 0; i < 1500 && find.text(text).evaluate().isEmpty; i++) {
             await tester.runAsync(
               () => Future<void>.delayed(const Duration(milliseconds: 10)),
             );

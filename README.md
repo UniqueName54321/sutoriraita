@@ -1,16 +1,15 @@
 # Sutōrīraitā
 
-**v0.0.4 pre-alpha — expect bugs.** Do not trust this program with the only copy
+**v0.1.0 pre-alpha — expect bugs.** Do not trust this program with the only copy
 of your writing. Keep independent backups. macOS and iOS are untested or rarely
 tested and are especially likely to have bugs, even when their builds compile.
 
-The **v0.0.4 update** makes the phone and tablet interface responsive to small
-screens, landscape orientation, safe areas, keyboards, and larger text. It is the
-final planned pre-alpha update before v0.1.0. Existing projects remain compatible;
-no migration is needed. Hammer transfer remains available from v0.0.3, and the
-dropdown redesign was released separately in v0.0.2.
+The **v0.1.0 update** introduces an extensible document model: **stories are no
+longer assumed to be linear prose**. New projects can be Prose, Screenplay, or
+Interactive Fiction (Story / Choice). Existing projects open as Prose without a
+migration. Hammer transfer, responsive layouts, and previous exports remain available.
 See [CHANGELOG.md](CHANGELOG.md) for the changes in each version, or
-[download v0.0.4 pre-alpha](https://github.com/UniqueName54321/sutoriraita/releases/tag/v0.0.4-pre-alpha).
+[download v0.1.0 pre-alpha](https://github.com/UniqueName54321/sutoriraita/releases/tag/v0.1.0-pre-alpha).
 
 A calm, local-first story-writing workspace targeting Windows, Android, Linux,
 macOS and iOS.
@@ -18,25 +17,20 @@ macOS and iOS.
 ## Download the app
 
 You do not need to build the app yourself. The latest published builds are
-**v0.0.4 pre-alpha**:
+**v0.1.0 pre-alpha**:
 
 <!-- Update the version and every asset link below when publishing a new release. -->
 
 | Platform | Download | Getting started |
 | --- | --- | --- |
-| Windows (64-bit) | [Download ZIP](https://github.com/UniqueName54321/sutoriraita/releases/download/v0.0.4-pre-alpha/sutoriraita-v0.0.4-pre-alpha-windows.zip) | Extract the **whole ZIP**, then run `sutoriraita.exe`. Keep its accompanying files together. |
-| macOS | [Download app ZIP](https://github.com/UniqueName54321/sutoriraita/releases/download/v0.0.4-pre-alpha/sutoriraita-v0.0.4-pre-alpha-macos.zip) | Extract and move `sutoriraita.app` to Applications. This build is unnotarized, so macOS may block it. |
-| Linux (x86-64) | [Download tar.gz](https://github.com/UniqueName54321/sutoriraita/releases/download/v0.0.4-pre-alpha/sutoriraita-v0.0.4-pre-alpha-linux.tar.gz) | Extract the full archive, then run `sutoriraita`. Run `sh install.sh` to add desktop/file-type integration. Requires GTK 3. |
-| Android | [Download APK](https://github.com/UniqueName54321/sutoriraita/releases/download/v0.0.4-pre-alpha/sutoriraita-v0.0.4-pre-alpha-android.apk) | Open the APK on your device and allow installation from that source when prompted. This is a development-signed build. |
-| iOS | [Download unsigned app ZIP](https://github.com/UniqueName54321/sutoriraita/releases/download/v0.0.4-pre-alpha/sutoriraita-v0.0.4-pre-alpha-ios-unsigned.zip) | **Not ready to install.** Apple signing and provisioning are required; there is no signed IPA or TestFlight release yet. |
+| Windows (64-bit) | [Download ZIP](https://github.com/UniqueName54321/sutoriraita/releases/download/v0.1.0-pre-alpha/sutoriraita-v0.1.0-pre-alpha-windows.zip) | Extract the **whole ZIP**, then run `sutoriraita.exe`. Keep its accompanying files together. |
+| macOS | [Download app ZIP](https://github.com/UniqueName54321/sutoriraita/releases/download/v0.1.0-pre-alpha/sutoriraita-v0.1.0-pre-alpha-macos.zip) | Extract and move `sutoriraita.app` to Applications. This build is unnotarized, so macOS may block it. |
+| Linux (x86-64) | [Download tar.gz](https://github.com/UniqueName54321/sutoriraita/releases/download/v0.1.0-pre-alpha/sutoriraita-v0.1.0-pre-alpha-linux.tar.gz) | Extract the full archive, then run `sutoriraita`. Run `sh install.sh` to add desktop/file-type integration. Requires GTK 3. |
+| Android | [Download APK](https://github.com/UniqueName54321/sutoriraita/releases/download/v0.1.0-pre-alpha/sutoriraita-v0.1.0-pre-alpha-android.apk) | Open the APK on your device and allow installation from that source when prompted. This is a development-signed build. |
+| iOS | [Download unsigned app ZIP](https://github.com/UniqueName54321/sutoriraita/releases/download/v0.1.0-pre-alpha/sutoriraita-v0.1.0-pre-alpha-ios-unsigned.zip) | **Not ready to install.** Apple signing and provisioning are required; there is no signed IPA or TestFlight release yet. |
 
-<<<<<<< HEAD
-=======
-Downloads currently require a GitHub account with access to this **private
-repository**. See the [release notes](https://github.com/UniqueName54321/sutoriraita/releases/tag/v0.0.4-pre-alpha)
-and [SHA-256 checksums](https://github.com/UniqueName54321/sutoriraita/releases/download/v0.0.4-pre-alpha/SHA256SUMS).
-
->>>>>>> a23ee57 (Release v0.0.4 responsive mobile UI)
+See the [release notes](https://github.com/UniqueName54321/sutoriraita/releases/tag/v0.1.0-pre-alpha)
+and [SHA-256 checksums](https://github.com/UniqueName54321/sutoriraita/releases/download/v0.1.0-pre-alpha/SHA256SUMS).
 **Android upgrades:** development signing keys can differ between builds, preventing
 an in-place upgrade. Back up your projects before uninstalling an existing version:
 uninstalling removes its app-private project library.
@@ -55,7 +49,29 @@ copies, Markdown-folder import, and Markdown, plain-text, and portable exports.
 
 The welcome screen groups actions into three compact dropdowns: **New project**
 (blank or example), **Open** (packed project or folder), and **Import** (Markdown,
-Novelist, or Hammer). Additional formats belong inside these menus, not in new buttons.
+Novelist, Hammer, or Fountain). Additional formats belong inside these menus, not in new buttons.
+
+## Extensible document models (v0.1.0)
+
+Choose a document model when creating a project:
+
+| Model | Editing model | Mode export |
+| --- | --- | --- |
+| Prose | Chapters and CommonMark scenes | Existing Markdown, document, Hammer, Novelist, and native exports |
+| Screenplay | Typed scene headings, action, character, dialogue, parenthetical, transition, shot, lyric, and note elements | Fountain (`.fountain`) |
+| Interactive Fiction | Sōhōkō-sei Story / Choice graph with CommonMark passages, choices, variables, conditions, effects, start and ending passages | Ink (`.ink`) |
+
+Screenplay editing provides smart Enter transitions, Tab element cycling,
+character-name autocomplete, and the existing scene navigator. Fountain files can
+be imported from **Import → Fountain screenplay**. Fountain is an interchange
+format; the native `.sutoriraita` project remains the complete editable source.
+
+Interactive Fiction uses the versioned **Sōhōkō-sei** intermediate representation
+instead of treating Ink as its storage model. The editor includes a selectable node
+graph, dead-link and unreachable-passage checks, variables, conditional choices,
+assignments/effects, and an in-app Play/Test flow. v0.1.0 implements Ink-style
+**Story / Choice** fiction. It does not implement Quest-style World / Parser fiction.
+Keep native backups because Ink export is intentionally a generated target.
 
 The startup screen scans the managed library and lists every valid project.
 App settings choose whether launch opens that project list or resumes the most

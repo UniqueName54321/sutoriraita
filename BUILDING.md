@@ -1,4 +1,4 @@
-# Building and releasing v0.0.4 pre-alpha
+# Building and releasing v0.1.0 pre-alpha
 
 Use Flutter **3.47.2 stable**, Dart **3.13.2** (bundled), and the committed
 `pubspec.lock`. Run `flutter doctor -v`, `flutter pub get`, `flutter analyze`,
@@ -62,7 +62,7 @@ unverified. A production release requires completing those checks on supported
 platforms. No workflow auto-publishes a production release. Keep `pubspec.yaml`,
 README, CHANGELOG and the in-app version label aligned. Every distinct update gets
 a new application version and a monotonically increasing build number. The current
-release is `0.0.4+4` / `v0.0.4-pre-alpha`; retain the old v0.0.1 through v0.0.3 tags,
+release is `0.1.0+5` / `v0.1.0-pre-alpha`; retain the old v0.0.1 through v0.0.4 tags,
 notes and downloads unchanged. Project `formatVersion` is independent of the app
 version and remains **1**; this update needs no native data migration.
 
@@ -83,12 +83,26 @@ version and remains **1**; this update needs no native data migration.
    and open it in Hammer. Check scene order, Unicode titles, notes, timeline and images.
 8. Export `.nov`, restore it in Novelist, and check chapters, emphasis and encyclopedia.
    Advanced Markdown and native-only metadata intentionally do not fully transfer.
+9. Create each v0.1.0 document model. In Screenplay, exercise every element type,
+   Enter/Tab transitions, autocomplete, Fountain import, and Fountain export.
+10. In Interactive Fiction, build branches with variables, conditions and effects;
+    verify graph warnings, Play/Test state changes, endings, and generated Ink.
 
 SAF saves use provider streams and preserve previous changed content under
 `.recovery`; providers do not promise filesystem-style atomic renames. A failed
 provider write must be treated as a save failure. Re-select folders after access
 is revoked or a provider moves them. Native folder/provider integration is not
 covered by the mocked Dart channel tests and needs the device checks above.
+
+## v0.1.0 local verification (2026-09-01)
+
+`flutter analyze` passed and all **51 runnable tests passed** serially; the one
+optional supplied-Hammer-example check remains skipped unless
+`SUTORIRAITA_HAMMER_EXAMPLES` is set. New tests cover old-manifest Prose defaults,
+native Screenplay/Sōhōkō-sei persistence, Fountain semantics, Ink generation,
+document-model selection, and small-phone mode editors. Windows and Android
+release builds succeeded locally as `0.1.0+5`. CI supplies the Linux, macOS, and
+unsigned iOS compile evidence and final release bundles.
 
 ## v0.0.4 local verification (2026-09-01)
 

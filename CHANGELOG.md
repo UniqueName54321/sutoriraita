@@ -1,5 +1,27 @@
 # Changelog
 
+## v0.1.0 pre-alpha — 2026-09-01
+
+**Stories are no longer assumed to be linear prose.**
+
+- Add a backward-compatible extensible document model. Manifests without a
+  `projectType` remain Prose; native format version remains 1.
+- Let project creation choose Prose, Screenplay, or Interactive Fiction
+  (Ink-style Story / Choice, not Quest-style World / Parser).
+- Add a typed screenplay editor with scene headings, action, character, dialogue,
+  parenthetical, transition, shot, lyrics, and notes; smart Enter/Tab transitions;
+  character autocomplete; and the existing scene navigator.
+- Import and export Fountain screenplays through native system pickers.
+- Add the versioned Sōhōkō-sei IF intermediate representation with passages,
+  choices, variables, conditions, assignments/effects, start/ending passages,
+  stored graph positions, and CommonMark passage prose.
+- Add node-graph visualization, dead-link and unreachable-node analysis, and a
+  built-in Play/Test flow that evaluates simple conditions and effects.
+- Export Sōhōkō-sei Story / Choice projects as generated Ink `.ink` stories.
+- Keep project creation, persistence, native packages, Prose behavior, Hammer,
+  Novelist, and existing document exports compatible.
+- Increment application version/build to `0.1.0+5`.
+
 ## v0.0.4 pre-alpha — 2026-09-01
 
 - Make the workspace, project list, encyclopedia, dialogs, and editor respond to

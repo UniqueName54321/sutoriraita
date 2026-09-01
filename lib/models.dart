@@ -1,5 +1,174 @@
 import 'dart:convert';
 
+enum ProjectType {
+  prose('prose', 'Prose'),
+  screenplay('screenplay', 'Screenplay'),
+  interactiveFiction('interactive_fiction', 'Interactive Fiction');
+
+  const ProjectType(this.key, this.label);
+  final String key;
+  final String label;
+
+  static ProjectType fromKey(String? value) => values.firstWhere(
+    (type) => type.key == value,
+    orElse: () => ProjectType.prose,
+  );
+}
+
+enum ScreenplayElementType {
+  sceneHeading('scene_heading', 'Scene heading'),
+  action('action', 'Action'),
+  character('character', 'Character'),
+  dialogue('dialogue', 'Dialogue'),
+  parenthetical('parenthetical', 'Parenthetical'),
+  transition('transition', 'Transition'),
+  shot('shot', 'Shot'),
+  lyrics('lyrics', 'Lyrics'),
+  note('note', 'Note');
+
+  const ScreenplayElementType(this.key, this.label);
+  final String key;
+  final String label;
+  static ScreenplayElementType fromKey(String? value) => values.firstWhere(
+    (type) => type.key == value,
+    orElse: () => ScreenplayElementType.action,
+  );
+}
+
+class ScreenplayElement {
+  ScreenplayElement({required this.id, required this.type, this.text = ''});
+  final String id;
+  ScreenplayElementType type;
+  String text;
+  Map<String, Object?> toJson() => {'id': id, 'type': type.key, 'text': text};
+  factory ScreenplayElement.fromJson(Map<String, Object?> json) =>
+      ScreenplayElement(
+        id: json['id'] as String,
+        type: ScreenplayElementType.fromKey(json['type'] as String?),
+        text: json['text'] as String? ?? '',
+      );
+}
+
+class IfChoice {
+  IfChoice({
+    required this.id,
+    this.label = '',
+    this.targetNodeId,
+    this.condition,
+  });
+  final String id;
+  String label;
+  String? targetNodeId;
+  String? condition;
+  Map<String, Object?> toJson() => {
+    'id': id,
+    'label': label,
+    if (targetNodeId != null) 'targetNodeId': targetNodeId,
+    if (condition?.trim().isNotEmpty == true) 'condition': condition,
+  };
+  factory IfChoice.fromJson(Map<String, Object?> json) => IfChoice(
+    id: json['id'] as String,
+    label: json['label'] as String? ?? '',
+    targetNodeId: json['targetNodeId'] as String?,
+    condition: json['condition'] as String?,
+  );
+}
+
+class IfEffect {
+  IfEffect({required this.variable, required this.expression});
+  String variable;
+  String expression;
+  Map<String, Object?> toJson() => {
+    'variable': variable,
+    'expression': expression,
+  };
+  factory IfEffect.fromJson(Map<String, Object?> json) => IfEffect(
+    variable: json['variable'] as String? ?? '',
+    expression: json['expression'] as String? ?? '',
+  );
+}
+
+class IfNode {
+  IfNode({
+    required this.id,
+    required this.title,
+    this.content = '',
+    this.isEnding = false,
+    this.x = 0,
+    this.y = 0,
+    List<IfChoice>? choices,
+    List<IfEffect>? effects,
+  }) : choices = choices ?? [],
+       effects = effects ?? [];
+  final String id;
+  String title;
+  String content;
+  bool isEnding;
+  double x;
+  double y;
+  final List<IfChoice> choices;
+  final List<IfEffect> effects;
+  Map<String, Object?> toJson() => {
+    'id': id,
+    'title': title,
+    'content': content,
+    'isEnding': isEnding,
+    'position': {'x': x, 'y': y},
+    'choices': choices.map((choice) => choice.toJson()).toList(),
+    'effects': effects.map((effect) => effect.toJson()).toList(),
+  };
+  factory IfNode.fromJson(Map<String, Object?> json) {
+    final position = (json['position'] as Map? ?? const {})
+        .cast<String, Object?>();
+    return IfNode(
+      id: json['id'] as String,
+      title: json['title'] as String? ?? 'Untitled passage',
+      content: json['content'] as String? ?? '',
+      isEnding: json['isEnding'] as bool? ?? false,
+      x: (position['x'] as num?)?.toDouble() ?? 0,
+      y: (position['y'] as num?)?.toDouble() ?? 0,
+      choices: (json['choices'] as List<Object?>? ?? const [])
+          .map(
+            (item) => IfChoice.fromJson((item as Map).cast<String, Object?>()),
+          )
+          .toList(),
+      effects: (json['effects'] as List<Object?>? ?? const [])
+          .map(
+            (item) => IfEffect.fromJson((item as Map).cast<String, Object?>()),
+          )
+          .toList(),
+    );
+  }
+}
+
+class SohoIr {
+  SohoIr({
+    Map<String, String>? variables,
+    List<IfNode>? nodes,
+    this.startNodeId,
+  }) : variables = variables ?? {},
+       nodes = nodes ?? [];
+  final Map<String, String> variables;
+  final List<IfNode> nodes;
+  String? startNodeId;
+  Map<String, Object?> toJson() => {
+    'ir': 'sohoko-sei',
+    'version': 1,
+    'variables': variables,
+    'startNodeId': startNodeId,
+    'nodes': nodes.map((node) => node.toJson()).toList(),
+  };
+  factory SohoIr.fromJson(Map<String, Object?> json) => SohoIr(
+    variables: (json['variables'] as Map? ?? const {}).map(
+      (k, v) => MapEntry('$k', '$v'),
+    ),
+    startNodeId: json['startNodeId'] as String?,
+    nodes: (json['nodes'] as List<Object?>? ?? const [])
+        .map((item) => IfNode.fromJson((item as Map).cast<String, Object?>()))
+        .toList(),
+  );
+}
+
 class StoryProject {
   StoryProject({
     required this.id,
@@ -9,6 +178,9 @@ class StoryProject {
     required this.createdAt,
     required this.updatedAt,
     required this.sections,
+    this.type = ProjectType.prose,
+    Map<String, List<ScreenplayElement>>? screenplay,
+    SohoIr? interactiveFiction,
     List<EncyclopediaEntry>? encyclopedia,
     List<String>? genres,
     List<GenrePack>? customGenrePacks,
@@ -16,7 +188,9 @@ class StoryProject {
     this.encyclopediaSchemaVersion = currentEncyclopediaSchemaVersion,
     List<EntryRelation>? relations,
     this.path,
-  }) : encyclopedia = encyclopedia ?? [],
+  }) : screenplay = screenplay ?? {},
+       interactiveFiction = interactiveFiction ?? SohoIr(),
+       encyclopedia = encyclopedia ?? [],
        genres = genres ?? [],
        customGenrePacks = customGenrePacks ?? [],
        genrePackVersions = genrePackVersions ?? {},
@@ -30,6 +204,9 @@ class StoryProject {
   DateTime updatedAt;
   String? path;
   final List<StorySection> sections;
+  final ProjectType type;
+  final Map<String, List<ScreenplayElement>> screenplay;
+  final SohoIr interactiveFiction;
   final List<EncyclopediaEntry> encyclopedia;
   final List<String> genres;
   final List<GenrePack> customGenrePacks;
@@ -48,9 +225,19 @@ class StoryProject {
     'title': title,
     'author': author,
     'language': language,
+    'projectType': type.key,
     'createdAt': createdAt.toUtc().toIso8601String(),
     'updatedAt': updatedAt.toUtc().toIso8601String(),
     'sections': sections.map((section) => section.toJson()).toList(),
+    if (type == ProjectType.screenplay)
+      'screenplay': screenplay.map(
+        (sceneId, elements) => MapEntry(
+          sceneId,
+          elements.map((element) => element.toJson()).toList(),
+        ),
+      ),
+    if (type == ProjectType.interactiveFiction)
+      'interactiveFiction': interactiveFiction.toJson(),
     'encyclopedia': encyclopedia.map((entry) => entry.toJson()).toList(),
     'genres': genres,
     'encyclopediaSchemaVersion': encyclopediaSchemaVersion,
@@ -68,6 +255,7 @@ class StoryProject {
       title: json['title'] as String? ?? 'Untitled project',
       author: json['author'] as String? ?? '',
       language: _normaliseLanguage(json['language'] as String? ?? 'en'),
+      type: ProjectType.fromKey(json['projectType'] as String?),
       createdAt:
           DateTime.tryParse(json['createdAt'] as String? ?? '') ??
           DateTime.now(),
@@ -81,6 +269,22 @@ class StoryProject {
                 StorySection.fromJson((item as Map).cast<String, Object?>()),
           )
           .toList(),
+      screenplay: (json['screenplay'] as Map? ?? const {}).map(
+        (key, value) => MapEntry(
+          '$key',
+          (value as List<Object?>)
+              .map(
+                (item) => ScreenplayElement.fromJson(
+                  (item as Map).cast<String, Object?>(),
+                ),
+              )
+              .toList(),
+        ),
+      ),
+      interactiveFiction: SohoIr.fromJson(
+        (json['interactiveFiction'] as Map? ?? const {})
+            .cast<String, Object?>(),
+      ),
       encyclopedia: (json['encyclopedia'] as List<Object?>? ?? const [])
           .map(
             (item) => EncyclopediaEntry.fromJson(

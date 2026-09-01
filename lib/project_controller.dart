@@ -28,6 +28,7 @@ class ProjectController extends ChangeNotifier {
   bool experimentalEntityDetection = false;
   WorkspaceArea area = WorkspaceArea.manuscript;
   EncyclopediaEntry? selectedEntry;
+  IfNode? selectedIfNode;
 
   Future<void> restore() async {
     loading = true;
@@ -54,6 +55,13 @@ class ProjectController extends ChangeNotifier {
         .expand((section) => section.scenes)
         .firstOrNull;
     selectedEntry = value.encyclopedia.firstOrNull;
+    selectedIfNode = value.interactiveFiction.nodes.firstWhere(
+      (node) => node.id == value.interactiveFiction.startNodeId,
+      orElse: () =>
+          value.interactiveFiction.nodes.firstOrNull ??
+          IfNode(id: '', title: ''),
+    );
+    if (selectedIfNode?.id.isEmpty == true) selectedIfNode = null;
     area = WorkspaceArea.manuscript;
     saveState = SaveState.saved;
     loading = false;
@@ -315,6 +323,15 @@ class ProjectController extends ChangeNotifier {
       updatedAt: DateTime.now(),
     );
     section.scenes.add(scene);
+    if (project!.type == ProjectType.screenplay) {
+      project!.screenplay[scene.id] = [
+        ScreenplayElement(
+          id: _uuid.v4(),
+          type: ScreenplayElementType.sceneHeading,
+          text: 'INT. LOCATION - DAY',
+        ),
+      ];
+    }
     selectedScene = scene;
     changed();
     return scene;
@@ -350,6 +367,7 @@ class ProjectController extends ChangeNotifier {
     final section = sectionFor(scene);
     if (section == null) return;
     section.scenes.remove(scene);
+    project!.screenplay.remove(scene.id);
     if (selectedScene == scene) {
       selectedScene = project!.sections
           .expand((item) => item.scenes)
@@ -382,6 +400,109 @@ class ProjectController extends ChangeNotifier {
     if (source == null || source == destination) return;
     source.scenes.remove(scene);
     destination.scenes.add(scene);
+    changed();
+  }
+
+  void updateScreenplayElement(
+    ScreenplayElement element, {
+    String? text,
+    ScreenplayElementType? type,
+  }) {
+    if (text != null) element.text = text;
+    if (type != null) element.type = type;
+    changed();
+  }
+
+  ScreenplayElement addScreenplayElement(
+    StoryScene scene,
+    int index,
+    ScreenplayElementType type,
+  ) {
+    final element = ScreenplayElement(id: _uuid.v4(), type: type);
+    final elements = project!.screenplay.putIfAbsent(scene.id, () => []);
+    elements.insert(index.clamp(0, elements.length), element);
+    changed();
+    return element;
+  }
+
+  void deleteScreenplayElement(StoryScene scene, ScreenplayElement element) {
+    final elements = project!.screenplay[scene.id];
+    if (elements == null || elements.length <= 1) return;
+    elements.remove(element);
+    changed();
+  }
+
+  void selectIfNode(IfNode node) {
+    selectedIfNode = node;
+    notifyListeners();
+  }
+
+  IfNode addIfNode() {
+    final index = project!.interactiveFiction.nodes.length;
+    final node = IfNode(
+      id: _uuid.v4(),
+      title: 'Passage ${index + 1}',
+      x: (index % 4) * 240,
+      y: (index ~/ 4) * 180,
+    );
+    project!.interactiveFiction.nodes.add(node);
+    selectedIfNode = node;
+    changed();
+    return node;
+  }
+
+  void updateIfNode(
+    IfNode node, {
+    String? title,
+    String? content,
+    bool? ending,
+  }) {
+    if (title != null && title.trim().isNotEmpty) node.title = title.trim();
+    if (content != null) node.content = content;
+    if (ending != null) node.isEnding = ending;
+    changed();
+  }
+
+  void setIfStart(IfNode node) {
+    project!.interactiveFiction.startNodeId = node.id;
+    changed();
+  }
+
+  IfChoice addIfChoice(IfNode node) {
+    final choice = IfChoice(id: _uuid.v4(), label: 'Continue');
+    node.choices.add(choice);
+    changed();
+    return choice;
+  }
+
+  void updateIfChoice(
+    IfChoice choice, {
+    String? label,
+    String? targetNodeId,
+    String? condition,
+  }) {
+    if (label != null) choice.label = label;
+    if (targetNodeId != null) {
+      choice.targetNodeId = targetNodeId.isEmpty ? null : targetNodeId;
+    }
+    if (condition != null) choice.condition = condition;
+    changed();
+  }
+
+  void deleteIfChoice(IfNode node, IfChoice choice) {
+    node.choices.remove(choice);
+    changed();
+  }
+
+  void addIfEffect(IfNode node) {
+    node.effects.add(IfEffect(variable: '', expression: ''));
+    changed();
+  }
+
+  void setIfVariable(String name, String initialValue) {
+    final clean = name.trim();
+    if (clean.isEmpty) return;
+    project!.interactiveFiction.variables[clean] = initialValue.trim();
     changed();
   }
 

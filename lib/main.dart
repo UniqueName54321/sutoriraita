@@ -11,6 +11,7 @@ import 'gemmell.dart';
 import 'genre_packs.dart';
 import 'internal_links.dart';
 import 'models.dart';
+import 'mode_editors.dart';
 import 'project_controller.dart';
 import 'project_action_menu.dart';
 import 'project_store.dart';
@@ -288,14 +289,18 @@ class WelcomeScreen extends StatelessWidget {
   const WelcomeScreen({super.key, required this.controller});
   final ProjectController controller;
   Future<void> _create(BuildContext context) async {
-    final result = await showDialog<(String, String)>(
+    final result = await showDialog<(String, String, ProjectType)>(
       context: context,
       builder: (_) => const CreateProjectDialog(),
     );
     if (result == null || !context.mounted) return;
     try {
       controller.useProject(
-        await controller.store.create(title: result.$1, author: result.$2),
+        await controller.store.create(
+          title: result.$1,
+          author: result.$2,
+          type: result.$3,
+        ),
       );
     } on ProjectCancelled {
       // The user closed the native folder picker.
@@ -341,6 +346,16 @@ class WelcomeScreen extends StatelessWidget {
   Future<void> _importNovelist(BuildContext context) async {
     try {
       controller.useProject(await controller.store.importNovelistFile());
+    } on ProjectCancelled {
+      // The user closed the native file picker.
+    } catch (error) {
+      if (context.mounted) _showError(context, error);
+    }
+  }
+
+  Future<void> _importFountain(BuildContext context) async {
+    try {
+      controller.useProject(await controller.store.importFountain());
     } on ProjectCancelled {
       // The user closed the native file picker.
     } catch (error) {
@@ -530,6 +545,11 @@ class WelcomeScreen extends StatelessWidget {
                                   icon: Icons.folder_copy_outlined,
                                   onPressed: () => _importHammer(context),
                                 ),
+                                (
+                                  label: 'Fountain screenplay (.fountain)',
+                                  icon: Icons.movie_creation_outlined,
+                                  onPressed: () => _importFountain(context),
+                                ),
                               ],
                             ),
                           ],
@@ -538,7 +558,7 @@ class WelcomeScreen extends StatelessWidget {
                         _ProjectLibrary(controller: controller),
                         const SizedBox(height: 46),
                         const Text(
-                          'VERSION 0.0.4  •  PRE-ALPHA',
+                          'VERSION 0.1.0  •  PRE-ALPHA',
                           style: TextStyle(
                             fontFamily: 'Segoe UI',
                             fontSize: 11,
@@ -905,9 +925,21 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
                         child:
                             widget.controller.area == WorkspaceArea.encyclopedia
                             ? EncyclopediaEditor(controller: widget.controller)
-                            : widget.controller.selectedScene == null
-                            ? const EmptyManuscript()
-                            : SceneEditor(controller: widget.controller),
+                            : switch (widget.controller.project!.type) {
+                                ProjectType.screenplay => ScreenplayEditor(
+                                  controller: widget.controller,
+                                ),
+                                ProjectType.interactiveFiction =>
+                                  InteractiveFictionEditor(
+                                    controller: widget.controller,
+                                  ),
+                                ProjectType.prose =>
+                                  widget.controller.selectedScene == null
+                                      ? const EmptyManuscript()
+                                      : SceneEditor(
+                                          controller: widget.controller,
+                                        ),
+                              },
                       ),
                     ],
                   ),
@@ -2109,6 +2141,7 @@ class CreateProjectDialog extends StatefulWidget {
 class _CreateProjectDialogState extends State<CreateProjectDialog> {
   final titleController = TextEditingController(),
       authorController = TextEditingController();
+  ProjectType type = ProjectType.prose;
   @override
   void dispose() {
     titleController.dispose();
@@ -2119,7 +2152,7 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
   void _submit() {
     final title = titleController.text.trim();
     if (title.isNotEmpty) {
-      Navigator.pop(context, (title, authorController.text.trim()));
+      Navigator.pop(context, (title, authorController.text.trim(), type));
     }
   }
 
@@ -2156,6 +2189,26 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
               labelText: 'Author',
               hintText: 'Your name',
             ),
+          ),
+          const SizedBox(height: 14),
+          DropdownButtonFormField<ProjectType>(
+            isExpanded: true,
+            initialValue: type,
+            decoration: const InputDecoration(labelText: 'Document model'),
+            items: ProjectType.values
+                .map(
+                  (value) => DropdownMenuItem(
+                    value: value,
+                    child: Text(switch (value) {
+                      ProjectType.prose => 'Prose',
+                      ProjectType.screenplay => 'Screenplay',
+                      ProjectType.interactiveFiction =>
+                        'Interactive fiction (Story / Choice)',
+                    }),
+                  ),
+                )
+                .toList(),
+            onChanged: (value) => setState(() => type = value ?? type),
           ),
         ],
       ),
@@ -2816,27 +2869,42 @@ Future<void> _projectAction(
       return;
     }
     if (value == 'package') {
+      final projectType = controller.project!.type;
+      final modeOption = switch (projectType) {
+        ProjectType.screenplay => (
+          'fountain',
+          'Fountain screenplay (.fountain)',
+          'Industry-readable plain-text screenplay',
+        ),
+        ProjectType.interactiveFiction => (
+          'ink',
+          'Ink story (.ink)',
+          'Compiled from the Sōhōkō-sei Story / Choice IR',
+        ),
+        ProjectType.prose => (
+          'novelist',
+          'Novelist story (.nov)',
+          'Chapters, scenes and encyclopedia; advanced formatting is simplified',
+        ),
+      };
       final selection = await showDialog<String>(
         context: context,
         builder: (dialogContext) => SimpleDialog(
           title: const Text('Export story project'),
           children: [
-            for (final option in const [
+            for (final option in [
               (
                 'sutoriraita',
                 'Sutōrīraitā (.sutoriraita)',
                 'Complete native project backup',
               ),
-              (
-                'hammer',
-                'Hammer story (.hammer.zip)',
-                'Unzip into HammerProjects; preserves imported notes and timeline',
-              ),
-              (
-                'novelist',
-                'Novelist story (.nov)',
-                'Chapters, scenes and encyclopedia; advanced formatting is simplified',
-              ),
+              if (projectType == ProjectType.prose)
+                (
+                  'hammer',
+                  'Hammer story (.hammer.zip)',
+                  'Unzip into HammerProjects; preserves imported notes and timeline',
+                ),
+              modeOption,
             ])
               SimpleDialogOption(
                 onPressed: () => Navigator.pop(dialogContext, option.$1),
@@ -2854,12 +2922,15 @@ Future<void> _projectAction(
         throw StateError('Save failed. Resolve it before exporting.');
       }
       final project = controller.project!;
-      final path = selection == 'sutoriraita'
-          ? await controller.store.exportPackage(project)
-          : await controller.store.exportStory(
-              project,
-              hammer: selection == 'hammer',
-            );
+      final path = switch (selection) {
+        'sutoriraita' => await controller.store.exportPackage(project),
+        'fountain' => await controller.store.exportFountain(project),
+        'ink' => await controller.store.exportInk(project),
+        _ => await controller.store.exportStory(
+          project,
+          hammer: selection == 'hammer',
+        ),
+      };
       if (context.mounted) {
         ScaffoldMessenger.of(context)
             .showSnackBar(SnackBar(content: Text('Exported to $path')));

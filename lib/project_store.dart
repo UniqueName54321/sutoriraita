@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
-import 'dart:typed_data' show BytesBuilder;
+import 'dart:typed_data' show BytesBuilder, Uint8List;
 
 import 'package:archive/archive.dart' hide ZLibDecoder;
 import 'package:file_picker/file_picker.dart';
@@ -15,6 +15,7 @@ import 'genre_packs.dart';
 import 'document_exporter.dart';
 import 'hammer_format.dart';
 import 'novelist_format.dart';
+import 'mode_formats.dart';
 
 part 'story_transfer.dart';
 
@@ -241,11 +242,14 @@ class ProjectStore {
   Future<StoryProject> create({
     required String title,
     required String author,
+    ProjectType type = ProjectType.prose,
   }) async {
     final now = DateTime.now();
     final id = _uuid.v4();
     final root = await _allocateProjectRoot(title);
 
+    final firstSceneId = _uuid.v4();
+    final firstNodeId = _uuid.v4();
     final project = StoryProject(
       id: id,
       title: title.trim(),
@@ -253,6 +257,7 @@ class ProjectStore {
       language: 'en',
       createdAt: now,
       updatedAt: now,
+      type: type,
       path: root,
       sections: [
         StorySection(
@@ -260,14 +265,43 @@ class ProjectStore {
           title: 'Chapter One',
           scenes: [
             StoryScene(
-              id: _uuid.v4(),
-              title: 'Opening scene',
+              id: firstSceneId,
+              title: type == ProjectType.screenplay
+                  ? 'Opening scene'
+                  : 'Opening scene',
               content: '',
               updatedAt: now,
             ),
           ],
         ),
       ],
+      screenplay: type == ProjectType.screenplay
+          ? {
+              firstSceneId: [
+                ScreenplayElement(
+                  id: _uuid.v4(),
+                  type: ScreenplayElementType.sceneHeading,
+                  text: 'INT. LOCATION - DAY',
+                ),
+                ScreenplayElement(
+                  id: _uuid.v4(),
+                  type: ScreenplayElementType.action,
+                ),
+              ],
+            }
+          : null,
+      interactiveFiction: type == ProjectType.interactiveFiction
+          ? SohoIr(
+              startNodeId: firstNodeId,
+              nodes: [
+                IfNode(
+                  id: firstNodeId,
+                  title: 'Start',
+                  content: 'Begin your story here.',
+                ),
+              ],
+            )
+          : null,
     );
     await save(project);
     await remember(project);
@@ -853,6 +887,85 @@ class ProjectStore {
     );
     if (output == null) throw const ProjectCancelled();
     return output.toString();
+  }
+
+  Future<String> exportFountain(StoryProject project) async {
+    await save(project);
+    final output = await FilePicker.saveFile(
+      dialogTitle: 'Export Fountain screenplay',
+      fileName: '${_safeName(project.title)}.fountain',
+      bytes: Uint8List.fromList(utf8.encode(FountainFormat.encode(project))),
+      mimeType: 'text/plain',
+      type: FileType.custom,
+      allowedExtensions: ['fountain'],
+    );
+    if (output == null) throw const ProjectCancelled();
+    return output.toString();
+  }
+
+  Future<String> exportInk(StoryProject project) async {
+    await save(project);
+    final output = await FilePicker.saveFile(
+      dialogTitle: 'Export Ink story',
+      fileName: '${_safeName(project.title)}.ink',
+      bytes: Uint8List.fromList(utf8.encode(SohoInkExporter.encode(project))),
+      mimeType: 'text/plain',
+      type: FileType.custom,
+      allowedExtensions: ['ink'],
+    );
+    if (output == null) throw const ProjectCancelled();
+    return output.toString();
+  }
+
+  Future<StoryProject> importFountain({String? sourcePath}) async {
+    String? source;
+    String? pickedName;
+    if (sourcePath == null) {
+      final picked = await FilePicker.pickFiles(
+        dialogTitle: 'Choose a Fountain screenplay',
+        type: FileType.custom,
+        allowedExtensions: ['fountain'],
+      );
+      if (picked.isEmpty) throw const ProjectCancelled();
+      pickedName = picked.single.name;
+      source = utf8.decode(
+        await _readPackageStream(picked.single.readAsByteStream()),
+      );
+    }
+    if (sourcePath != null) {
+      source = await File(sourcePath).readAsString();
+      pickedName = sourcePath.split(Platform.pathSeparator).last;
+    }
+    final parsed = FountainFormat.decode(source!);
+    final name = (pickedName ?? 'Imported screenplay').replaceFirst(
+      RegExp(r'\.fountain$', caseSensitive: false),
+      '',
+    );
+    final project = await create(
+      title: name.isEmpty ? 'Imported screenplay' : name,
+      author: '',
+      type: ProjectType.screenplay,
+    );
+    project.sections.clear();
+    project.screenplay.clear();
+    final section = StorySection(
+      id: _uuid.v4(),
+      title: 'Screenplay',
+      scenes: [],
+    );
+    for (final parsedScene in parsed) {
+      final scene = StoryScene(
+        id: _uuid.v4(),
+        title: parsedScene.title,
+        content: '',
+        updatedAt: DateTime.now(),
+      );
+      section.scenes.add(scene);
+      project.screenplay[scene.id] = parsedScene.elements;
+    }
+    project.sections.add(section);
+    await save(project);
+    return project;
   }
 
   Future<String> exportPackage(StoryProject project) async {

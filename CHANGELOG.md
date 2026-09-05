@@ -1,5 +1,21 @@
 # Changelog
 
+## v0.1.1 pre-alpha — 2026-09-05
+
+- Drag chapter grips to reorder whole chapters, with all their scenes. Drag scene
+  grips between positions in the same chapter or into another chapter, including
+  empty chapters. Drop on a chapter title to insert at its start.
+- Add, replace and remove PNG/JPEG covers in Project settings. Covers persist
+  locally and appear in PDF, EPUB, HTML, FB2 and ODT manuscript exports. Plain
+  text and Markdown omit covers; all story-project transfers strip covers.
+- Use Yes/No export wizards by default, with Back, Cancel and a final format
+  confirmation. Disable Use export wizards in App settings for the original lists.
+- Add Experimental Features, disabled by default. Screenplay and Interactive
+  Fiction creation, editors and format actions require it. Existing experimental
+  projects remain intact and can be edited again after enabling the setting.
+  Parser IF additionally requires the existing Developer Mode setting.
+- Version `0.1.1+6` is a separate release from v0.1.0; native format remains 1.
+
 ## v0.1.0 pre-alpha — 2026-09-01
 
 **Stories are no longer assumed to be linear prose.**

@@ -1,13 +1,18 @@
 # Sutōrīraitā
 
-**v0.1.0 pre-alpha — expect bugs.** Do not trust this program with the only copy
+**v0.1.1 pre-alpha — expect bugs.** Do not trust this program with the only copy
 of your writing. Keep independent backups. macOS and iOS are untested or rarely
 tested and are especially likely to have bugs, even when their builds compile.
 
-The **v0.1.0 update** introduces an extensible document model: **stories are no
-longer assumed to be linear prose**. New projects can be Prose, Screenplay, or
-Interactive Fiction (Story / Choice). Existing projects open as Prose without a
-migration. Hammer transfer, responsive layouts, and previous exports remain available.
+The **v0.1.1 update** adds chapter and scene drag grips, cover images in Project
+settings and supported manuscript exports, and Yes/No export wizards. Prose is
+the default focus: enable **Experimental Features** in App settings to use
+Screenplay or Interactive Fiction. Turn off **Use export wizards** to restore
+the original format lists. Story-project transfers omit covers; PDF, EPUB,
+HTML, FB2 and ODT manuscripts include them. Markdown and plain text omit images.
+
+This source version is separate from v0.1.0. The download links below remain for
+v0.1.0 until v0.1.1 artifacts are published.
 See [CHANGELOG.md](CHANGELOG.md) for the changes in each version, or
 [download v0.1.0 pre-alpha](https://github.com/UniqueName54321/sutoriraita/releases/tag/v0.1.0-pre-alpha).
 

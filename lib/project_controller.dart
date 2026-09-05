@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui' show Offset;
 
 import 'package:flutter/foundation.dart';
 import 'package:uuid/uuid.dart';
@@ -26,6 +27,9 @@ class ProjectController extends ChangeNotifier {
   int autosaveDelayMs = 700;
   bool openLastProjectOnStartup = false;
   bool experimentalEntityDetection = false;
+  bool developerMode = false;
+  bool experimentalFeatures = false;
+  bool exportWizards = true;
   WorkspaceArea area = WorkspaceArea.manuscript;
   EncyclopediaEntry? selectedEntry;
   IfNode? selectedIfNode;
@@ -36,6 +40,12 @@ class ProjectController extends ChangeNotifier {
     autosaveDelayMs = await store.loadAutosaveDelay();
     openLastProjectOnStartup = await store.loadOpenLastProject();
     experimentalEntityDetection = await store.loadExperimentalEntityDetection();
+    developerMode = await store.loadDeveloperMode();
+    experimentalFeatures = await store.loadPreference(
+      "experimentalFeatures",
+      false,
+    );
+    exportWizards = await store.loadPreference("exportWizards", true);
     final discovered = await store.discoverProjects();
     project = openLastProjectOnStartup ? await store.openLast() : null;
     if (openLastProjectOnStartup && project == null && discovered.isNotEmpty) {
@@ -93,6 +103,58 @@ class ProjectController extends ChangeNotifier {
   Future<void> setExperimentalEntityDetection(bool value) async {
     experimentalEntityDetection = value;
     await store.saveExperimentalEntityDetection(value);
+    notifyListeners();
+  }
+
+  Future<void> setExperimentalFeatures(bool value) async {
+    experimentalFeatures = value;
+    await store.savePreference('experimentalFeatures', value);
+    notifyListeners();
+  }
+
+  Future<void> setExportWizards(bool value) async {
+    exportWizards = value;
+    await store.savePreference('exportWizards', value);
+    notifyListeners();
+  }
+
+  bool get projectEnabled =>
+      project == null ||
+      project!.type == ProjectType.prose ||
+      (experimentalFeatures &&
+          (project!.type != ProjectType.parserFictionPrototype ||
+              developerMode));
+
+  void moveChapter(StorySection chapter, int insertionIndex) {
+    final sections = project!.sections;
+    final old = sections.indexOf(chapter);
+    if (old < 0) return;
+    sections.removeAt(old);
+    if (old < insertionIndex) insertionIndex--;
+    sections.insert(insertionIndex.clamp(0, sections.length), chapter);
+    changed();
+  }
+
+  void moveSceneTo(
+    StoryScene scene,
+    StorySection destination,
+    int insertionIndex,
+  ) {
+    final source = sectionFor(scene);
+    if (source == null || !project!.sections.contains(destination)) return;
+    final old = source.scenes.indexOf(scene);
+    source.scenes.removeAt(old);
+    if (source == destination && old < insertionIndex) insertionIndex--;
+    destination.scenes.insert(
+      insertionIndex.clamp(0, destination.scenes.length),
+      scene,
+    );
+    changed();
+  }
+
+  Future<void> setDeveloperMode(bool value) async {
+    developerMode = value;
+    await store.saveDeveloperMode(value);
     notifyListeners();
   }
 
@@ -439,9 +501,12 @@ class ProjectController extends ChangeNotifier {
 
   IfNode addIfNode() {
     final index = project!.interactiveFiction.nodes.length;
+    final sceneId =
+        selectedIfNode?.sceneId ?? project!.interactiveFiction.scenes.first.id;
     final node = IfNode(
       id: _uuid.v4(),
       title: 'Passage ${index + 1}',
+      sceneId: sceneId,
       x: (index % 4) * 240,
       y: (index ~/ 4) * 180,
     );
@@ -456,11 +521,31 @@ class ProjectController extends ChangeNotifier {
     String? title,
     String? content,
     bool? ending,
+    bool? endsScene,
+    String? sceneId,
   }) {
     if (title != null && title.trim().isNotEmpty) node.title = title.trim();
     if (content != null) node.content = content;
     if (ending != null) node.isEnding = ending;
+    if (endsScene != null) node.endsScene = endsScene;
+    if (sceneId != null) node.sceneId = sceneId;
     changed();
+  }
+
+  void moveIfNode(IfNode node, Offset delta) {
+    node.x = (node.x + delta.dx).clamp(0, 1100);
+    node.y = (node.y + delta.dy).clamp(0, 740);
+    changed();
+  }
+
+  IfScene addIfScene() {
+    final scene = IfScene(
+      id: _uuid.v4(),
+      title: 'Scene ${project!.interactiveFiction.scenes.length + 1}',
+    );
+    project!.interactiveFiction.scenes.add(scene);
+    changed();
+    return scene;
   }
 
   void setIfStart(IfNode node) {

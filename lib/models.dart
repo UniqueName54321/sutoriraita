@@ -3,7 +3,11 @@ import 'dart:convert';
 enum ProjectType {
   prose('prose', 'Prose'),
   screenplay('screenplay', 'Screenplay'),
-  interactiveFiction('interactive_fiction', 'Interactive Fiction');
+  interactiveFiction('interactive_fiction', 'Interactive Fiction'),
+  parserFictionPrototype(
+    'parser_fiction_prototype',
+    'Parser IF prototype (Developer Mode)',
+  );
 
   const ProjectType(this.key, this.label);
   final String key;
@@ -94,6 +98,8 @@ class IfNode {
     required this.title,
     this.content = '',
     this.isEnding = false,
+    this.endsScene = false,
+    this.sceneId = 'scene-1',
     this.x = 0,
     this.y = 0,
     List<IfChoice>? choices,
@@ -104,6 +110,8 @@ class IfNode {
   String title;
   String content;
   bool isEnding;
+  bool endsScene;
+  String sceneId;
   double x;
   double y;
   final List<IfChoice> choices;
@@ -113,6 +121,8 @@ class IfNode {
     'title': title,
     'content': content,
     'isEnding': isEnding,
+    'endsScene': endsScene,
+    'sceneId': sceneId,
     'position': {'x': x, 'y': y},
     'choices': choices.map((choice) => choice.toJson()).toList(),
     'effects': effects.map((effect) => effect.toJson()).toList(),
@@ -125,6 +135,8 @@ class IfNode {
       title: json['title'] as String? ?? 'Untitled passage',
       content: json['content'] as String? ?? '',
       isEnding: json['isEnding'] as bool? ?? false,
+      endsScene: json['endsScene'] as bool? ?? false,
+      sceneId: json['sceneId'] as String? ?? 'scene-1',
       x: (position['x'] as num?)?.toDouble() ?? 0,
       y: (position['y'] as num?)?.toDouble() ?? 0,
       choices: (json['choices'] as List<Object?>? ?? const [])
@@ -141,15 +153,29 @@ class IfNode {
   }
 }
 
+class IfScene {
+  IfScene({required this.id, required this.title});
+  final String id;
+  String title;
+  Map<String, Object?> toJson() => {'id': id, 'title': title};
+  factory IfScene.fromJson(Map<String, Object?> json) => IfScene(
+    id: json['id'] as String,
+    title: json['title'] as String? ?? 'Untitled scene',
+  );
+}
+
 class SohoIr {
   SohoIr({
     Map<String, String>? variables,
     List<IfNode>? nodes,
+    List<IfScene>? scenes,
     this.startNodeId,
   }) : variables = variables ?? {},
-       nodes = nodes ?? [];
+       nodes = nodes ?? [],
+       scenes = scenes ?? [IfScene(id: 'scene-1', title: 'Scene One')];
   final Map<String, String> variables;
   final List<IfNode> nodes;
+  final List<IfScene> scenes;
   String? startNodeId;
   Map<String, Object?> toJson() => {
     'ir': 'sohoko-sei',
@@ -157,6 +183,7 @@ class SohoIr {
     'variables': variables,
     'startNodeId': startNodeId,
     'nodes': nodes.map((node) => node.toJson()).toList(),
+    'scenes': scenes.map((scene) => scene.toJson()).toList(),
   };
   factory SohoIr.fromJson(Map<String, Object?> json) => SohoIr(
     variables: (json['variables'] as Map? ?? const {}).map(
@@ -166,6 +193,14 @@ class SohoIr {
     nodes: (json['nodes'] as List<Object?>? ?? const [])
         .map((item) => IfNode.fromJson((item as Map).cast<String, Object?>()))
         .toList(),
+    scenes: json['scenes'] == null
+        ? null
+        : (json['scenes'] as List<Object?>)
+              .map(
+                (item) =>
+                    IfScene.fromJson((item as Map).cast<String, Object?>()),
+              )
+              .toList(),
   );
 }
 
@@ -179,6 +214,7 @@ class StoryProject {
     required this.updatedAt,
     required this.sections,
     this.type = ProjectType.prose,
+    this.coverImage,
     Map<String, List<ScreenplayElement>>? screenplay,
     SohoIr? interactiveFiction,
     List<EncyclopediaEntry>? encyclopedia,
@@ -204,6 +240,7 @@ class StoryProject {
   DateTime updatedAt;
   String? path;
   final List<StorySection> sections;
+  String? coverImage;
   final ProjectType type;
   final Map<String, List<ScreenplayElement>> screenplay;
   final SohoIr interactiveFiction;
@@ -226,6 +263,7 @@ class StoryProject {
     'author': author,
     'language': language,
     'projectType': type.key,
+    if (coverImage != null) 'coverImage': coverImage,
     'createdAt': createdAt.toUtc().toIso8601String(),
     'updatedAt': updatedAt.toUtc().toIso8601String(),
     'sections': sections.map((section) => section.toJson()).toList(),
@@ -256,6 +294,7 @@ class StoryProject {
       author: json['author'] as String? ?? '',
       language: _normaliseLanguage(json['language'] as String? ?? 'en'),
       type: ProjectType.fromKey(json['projectType'] as String?),
+      coverImage: json['coverImage'] as String?,
       createdAt:
           DateTime.tryParse(json['createdAt'] as String? ?? '') ??
           DateTime.now(),

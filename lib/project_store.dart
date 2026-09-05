@@ -525,7 +525,11 @@ class ProjectStore {
       );
     }
     for (final path in paths) {
-      final bytes = await ProjectDocuments.read(root, path);
+      final bytes = path == manifestName
+          ? Uint8List.fromList(
+              utf8.encode(jsonEncode(project.toJson()..remove('coverImage'))),
+            )
+          : await ProjectDocuments.read(root, path);
       if (bytes != null) {
         archive.addFile(ArchiveFile(path, bytes.length, bytes));
       }
@@ -586,6 +590,7 @@ class ProjectStore {
         await target.writeAsBytes(await _unpackEntry(file), flush: true);
       }
       // A new identity prevents library deduplication from archiving the source.
+      json.remove('coverImage');
       json['id'] = _uuid.v4();
       await File('${root.path}/$manifestName')
           .writeAsString(jsonEncode(json), flush: true);
@@ -728,6 +733,23 @@ class ProjectStore {
   Future<void> saveExperimentalEntityDetection(bool value) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('experimentalEntityDetection', value);
+  }
+
+  Future<bool> loadPreference(String key, bool fallback) async =>
+      (await SharedPreferences.getInstance()).getBool(key) ?? fallback;
+
+  Future<void> savePreference(String key, bool value) async {
+    await (await SharedPreferences.getInstance()).setBool(key, value);
+  }
+
+  Future<bool> loadDeveloperMode() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool('developerMode') ?? false;
+  }
+
+  Future<void> saveDeveloperMode(bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('developerMode', value);
   }
 
   Future<void> save(StoryProject project) async {
@@ -1040,7 +1062,11 @@ class ProjectStore {
       final relative = file.path
           .substring(root.path.length + 1)
           .replaceAll('\\', '/');
-      final bytes = await file.readAsBytes();
+      final bytes = relative == manifestName
+          ? Uint8List.fromList(
+              utf8.encode(jsonEncode(project.toJson()..remove('coverImage'))),
+            )
+          : await file.readAsBytes();
       archive.addFile(ArchiveFile(relative, bytes.length, bytes));
     }
     return Uint8List.fromList(ZipEncoder().encode(archive));

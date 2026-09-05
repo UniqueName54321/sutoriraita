@@ -1,4 +1,4 @@
-# Building and releasing v0.1.0 pre-alpha
+# Building and releasing v0.1.1 pre-alpha
 
 Use Flutter **3.47.2 stable**, Dart **3.13.2** (bundled), and the committed
 `pubspec.lock`. Run `flutter doctor -v`, `flutter pub get`, `flutter analyze`,
@@ -62,7 +62,7 @@ unverified. A production release requires completing those checks on supported
 platforms. No workflow auto-publishes a production release. Keep `pubspec.yaml`,
 README, CHANGELOG and the in-app version label aligned. Every distinct update gets
 a new application version and a monotonically increasing build number. The current
-release is `0.1.0+5` / `v0.1.0-pre-alpha`; retain the old v0.0.1 through v0.0.4 tags,
+release is `0.1.1+6` / `v0.1.1-pre-alpha`; retain all earlier tags including v0.1.0,
 notes and downloads unchanged. Project `formatVersion` is independent of the app
 version and remains **1**; this update needs no native data migration.
 
@@ -209,3 +209,19 @@ and uploads them with versioned filenames and SHA256SUMS. It checks that the
 release tag agrees with the selected build's pubspec version. It refuses failed builds or published/non-pre-alpha
 releases, and never publishes the draft. Review the selected build commit and
 artifact checksums before publishing the pre-release.
+
+## v0.1.1 local verification (2026-09-05)
+
+- Full Flutter test suite: 60 passed; one optional external Hammer-fixture test
+  skipped because `SUTORIRAITA_HAMMER_EXAMPLES` was not configured.
+- New checks exercise real chapter/scene drag gestures, scene insertion order,
+  cover save/reopen and package stripping, image-bearing manuscript formats,
+  wizard navigation and reachability, and opt-in experimental project creation.
+- Existing mobile viewport, keyboard and text-scaling tests pass.
+- Native picker interaction and visual cover layout on every operating system
+  still require the interactive release checks above.
+
+- Windows release build succeeded locally as `0.1.1+6`; packaged separately as
+  `sutoriraita-v0.1.1-pre-alpha-windows.zip`. No release was published.
+- Final `flutter analyze --no-pub` passed; all nine v0.1.1 regression tests
+  passed again after the final ODT cover-layout adjustment.

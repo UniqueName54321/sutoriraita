@@ -1,4 +1,13 @@
 import 'dart:async';
+import 'dart:convert';
+import 'dart:ui' as ui;
+import 'dart:typed_data';
+
+import 'package:file_picker/file_picker.dart';
+
+import 'export_wizard.dart';
+import 'chapter_navigator.dart';
+
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -291,7 +300,10 @@ class WelcomeScreen extends StatelessWidget {
   Future<void> _create(BuildContext context) async {
     final result = await showDialog<(String, String, ProjectType)>(
       context: context,
-      builder: (_) => const CreateProjectDialog(),
+      builder: (_) => CreateProjectDialog(
+        experimentalFeatures: controller.experimentalFeatures,
+        developerMode: controller.developerMode,
+      ),
     );
     if (result == null || !context.mounted) return;
     try {
@@ -545,11 +557,12 @@ class WelcomeScreen extends StatelessWidget {
                                   icon: Icons.folder_copy_outlined,
                                   onPressed: () => _importHammer(context),
                                 ),
-                                (
-                                  label: 'Fountain screenplay (.fountain)',
-                                  icon: Icons.movie_creation_outlined,
-                                  onPressed: () => _importFountain(context),
-                                ),
+                                if (controller.experimentalFeatures)
+                                  (
+                                    label: 'Fountain screenplay (.fountain)',
+                                    icon: Icons.movie_creation_outlined,
+                                    onPressed: () => _importFountain(context),
+                                  ),
                               ],
                             ),
                           ],
@@ -558,7 +571,7 @@ class WelcomeScreen extends StatelessWidget {
                         _ProjectLibrary(controller: controller),
                         const SizedBox(height: 46),
                         const Text(
-                          'VERSION 0.1.0  •  PRE-ALPHA',
+                          'VERSION 0.1.1  •  PRE-ALPHA',
                           style: TextStyle(
                             fontFamily: 'Segoe UI',
                             fontSize: 11,
@@ -906,13 +919,13 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
         },
         child: Scaffold(
           key: scaffoldKey,
-          drawer: narrow
+          drawer: narrow && widget.controller.projectEnabled
               ? Drawer(width: 310, child: SafeArea(child: sidebar))
               : null,
           body: SafeArea(
             child: Row(
               children: [
-                if (!narrow && sidebarOpen)
+                if (!narrow && sidebarOpen && widget.controller.projectEnabled)
                   SizedBox(width: 300, child: sidebar),
                 Expanded(
                   child: Column(
@@ -922,8 +935,17 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
                         onMenu: () => _toggleSidebar(narrow),
                       ),
                       Expanded(
-                        child:
-                            widget.controller.area == WorkspaceArea.encyclopedia
+                        child: !widget.controller.projectEnabled
+                            ? const Center(
+                                child: Padding(
+                                  padding: EdgeInsets.all(24),
+                                  child: Text(
+                                    "Enable Experimental Features in App settings to edit this project. Parser IF also requires Developer Mode.",
+                                  ),
+                                ),
+                              )
+                            : widget.controller.area ==
+                                  WorkspaceArea.encyclopedia
                             ? EncyclopediaEditor(controller: widget.controller)
                             : switch (widget.controller.project!.type) {
                                 ProjectType.screenplay => ScreenplayEditor(
@@ -932,6 +954,12 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
                                 ProjectType.interactiveFiction =>
                                   InteractiveFictionEditor(
                                     controller: widget.controller,
+                                  ),
+                                ProjectType.parserFictionPrototype =>
+                                  const Center(
+                                    child: Text(
+                                      "Parser IF prototype is under development.",
+                                    ),
                                   ),
                                 ProjectType.prose =>
                                   widget.controller.selectedScene == null
@@ -989,36 +1017,40 @@ class WorkspaceTopBar extends StatelessWidget {
           tooltip: 'Project menu',
           icon: const Icon(Icons.more_horiz),
           onSelected: (value) => _projectAction(context, controller, value),
-          itemBuilder: (_) => const [
-            PopupMenuItem(
+          itemBuilder: (_) => [
+            const PopupMenuItem(
               value: 'library',
               child: _MenuLabel(Icons.grid_view_outlined, 'Project list'),
             ),
-            PopupMenuItem(
+            const PopupMenuItem(
               value: 'settings',
               child: _MenuLabel(Icons.tune, 'Project settings'),
             ),
-            PopupMenuItem(
+            const PopupMenuItem(
               value: 'app-settings',
               child: _MenuLabel(Icons.settings_outlined, 'App settings'),
             ),
-            PopupMenuDivider(),
-            PopupMenuItem(
-              value: 'document-export',
-              child: _MenuLabel(
-                Icons.file_download_outlined,
-                'Export manuscript…',
+            const PopupMenuDivider(),
+            if (controller.projectEnabled &&
+                controller.project!.type != ProjectType.interactiveFiction &&
+                controller.project!.type != ProjectType.parserFictionPrototype)
+              const PopupMenuItem(
+                value: 'document-export',
+                child: _MenuLabel(
+                  Icons.file_download_outlined,
+                  'Export manuscript…',
+                ),
               ),
-            ),
-            PopupMenuItem(
-              value: 'package',
-              child: _MenuLabel(
-                Icons.inventory_2_outlined,
-                'Export story project…',
+            if (controller.projectEnabled)
+              const PopupMenuItem(
+                value: 'package',
+                child: _MenuLabel(
+                  Icons.inventory_2_outlined,
+                  'Export story project…',
+                ),
               ),
-            ),
-            PopupMenuDivider(),
-            PopupMenuItem(
+            const PopupMenuDivider(),
+            const PopupMenuItem(
               value: 'close',
               child: _MenuLabel(Icons.close, 'Close project'),
             ),
@@ -1112,14 +1144,34 @@ class ManuscriptSidebar extends StatelessWidget {
               ),
             ),
             Expanded(
-              child: ListView.builder(
+              child: ListView(
                 padding: const EdgeInsets.fromLTRB(8, 0, 8, 18),
-                itemCount: controller.project!.sections.length,
-                itemBuilder: (context, index) => SectionTile(
-                  section: controller.project!.sections[index],
-                  controller: controller,
-                  onSelected: onClose,
-                ),
+                children: [
+                  for (
+                    var index = 0;
+                    index < controller.project!.sections.length;
+                    index++
+                  ) ...[
+                    StoryDropSlot<StorySection>(
+                      label: 'Move chapter here',
+                      onDrop: (chapter) =>
+                          controller.moveChapter(chapter, index),
+                    ),
+                    SectionTile(
+                      key: ValueKey(controller.project!.sections[index].id),
+                      section: controller.project!.sections[index],
+                      controller: controller,
+                      onSelected: onClose,
+                    ),
+                  ],
+                  StoryDropSlot<StorySection>(
+                    label: 'Move chapter to end',
+                    onDrop: (chapter) => controller.moveChapter(
+                      chapter,
+                      controller.project!.sections.length,
+                    ),
+                  ),
+                ],
               ),
             ),
           ] else
@@ -1173,12 +1225,19 @@ class SectionTile extends StatelessWidget {
       initiallyExpanded: true,
       tilePadding: const EdgeInsets.only(left: 8, right: 2),
       childrenPadding: EdgeInsets.zero,
-      leading: const Icon(Icons.keyboard_arrow_down, size: 18),
-      title: Text(
-        section.title,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        style: Theme.of(context).textTheme.labelLarge,
+      leading: StoryDragGrip<StorySection>(
+        data: section,
+        label: "Drag chapter ${section.title}",
+      ),
+      title: StoryDropSlot<StoryScene>(
+        label: "Move scene to start",
+        onDrop: (scene) => controller.moveSceneTo(scene, section, 0),
+        child: Text(
+          section.title,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: Theme.of(context).textTheme.labelLarge,
+        ),
       ),
       trailing: PopupMenuButton<String>(
         iconSize: 18,
@@ -1210,62 +1269,77 @@ class SectionTile extends StatelessWidget {
         ],
       ),
       children: [
-        ReorderableListView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          buildDefaultDragHandles: false,
-          itemCount: section.scenes.length,
-          onReorderItem: (oldIndex, newIndex) =>
-              controller.reorderScene(section, oldIndex, newIndex),
-          itemBuilder: (context, index) {
-            final scene = section.scenes[index],
-                selected = controller.selectedScene == scene;
-            return Material(
-              key: ValueKey(scene.id),
-              color: selected ? const Color(0xFFDCE6DE) : Colors.transparent,
-              borderRadius: BorderRadius.circular(8),
-              child: ListTile(
-                dense: true,
-                minLeadingWidth: 18,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                leading: ReorderableDragStartListener(
-                  index: index,
-                  child: const Icon(
-                    Icons.drag_indicator,
-                    size: 17,
-                    color: Color(0xFF9C988D),
-                  ),
-                ),
-                title: Text(
-                  scene.title,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontFamily: 'Segoe UI',
-                    fontSize: 13.5,
-                    fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
-                  ),
-                ),
-                trailing: PopupMenuButton<String>(
-                  icon: const Icon(Icons.more_vert, size: 16),
-                  padding: EdgeInsets.zero,
-                  onSelected: (value) =>
-                      _sceneAction(context, controller, section, scene, value),
-                  itemBuilder: (_) => const [
-                    PopupMenuItem(value: 'rename', child: Text('Rename')),
-                    PopupMenuItem(value: 'move', child: Text('Move to…')),
-                    PopupMenuItem(value: 'delete', child: Text('Delete')),
-                  ],
-                ),
-                onTap: () {
-                  controller.select(scene);
-                  onSelected?.call();
+        Column(
+          children: [
+            for (var index = 0; index < section.scenes.length; index++) ...[
+              StoryDropSlot<StoryScene>(
+                label: 'Move scene here',
+                onDrop: (scene) =>
+                    controller.moveSceneTo(scene, section, index),
+              ),
+              Builder(
+                builder: (context) {
+                  final scene = section.scenes[index],
+                      selected = controller.selectedScene == scene;
+                  return Material(
+                    key: ValueKey(scene.id),
+                    color: selected
+                        ? const Color(0xFFDCE6DE)
+                        : Colors.transparent,
+                    borderRadius: BorderRadius.circular(8),
+                    child: ListTile(
+                      dense: true,
+                      minLeadingWidth: 18,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      leading: StoryDragGrip<StoryScene>(
+                        data: scene,
+                        label: 'Drag scene ${scene.title}',
+                      ),
+                      title: Text(
+                        scene.title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontFamily: 'Segoe UI',
+                          fontSize: 13.5,
+                          fontWeight: selected
+                              ? FontWeight.w600
+                              : FontWeight.w400,
+                        ),
+                      ),
+                      trailing: PopupMenuButton<String>(
+                        icon: const Icon(Icons.more_vert, size: 16),
+                        padding: EdgeInsets.zero,
+                        onSelected: (value) => _sceneAction(
+                          context,
+                          controller,
+                          section,
+                          scene,
+                          value,
+                        ),
+                        itemBuilder: (_) => const [
+                          PopupMenuItem(value: 'rename', child: Text('Rename')),
+                          PopupMenuItem(value: 'move', child: Text('Move to…')),
+                          PopupMenuItem(value: 'delete', child: Text('Delete')),
+                        ],
+                      ),
+                      onTap: () {
+                        controller.select(scene);
+                        onSelected?.call();
+                      },
+                    ),
+                  );
                 },
               ),
-            );
-          },
+            ],
+            StoryDropSlot<StoryScene>(
+              label: 'Move scene to end',
+              onDrop: (scene) =>
+                  controller.moveSceneTo(scene, section, section.scenes.length),
+            ),
+          ],
         ),
         Padding(
           padding: const EdgeInsets.only(left: 27, bottom: 6),
@@ -2133,7 +2207,13 @@ class _SceneEditorState extends State<SceneEditor> {
 }
 
 class CreateProjectDialog extends StatefulWidget {
-  const CreateProjectDialog({super.key});
+  const CreateProjectDialog({
+    super.key,
+    this.experimentalFeatures = false,
+    this.developerMode = false,
+  });
+  final bool experimentalFeatures;
+  final bool developerMode;
   @override
   State<CreateProjectDialog> createState() => _CreateProjectDialogState();
 }
@@ -2196,10 +2276,19 @@ class _CreateProjectDialogState extends State<CreateProjectDialog> {
             initialValue: type,
             decoration: const InputDecoration(labelText: 'Document model'),
             items: ProjectType.values
+                .where(
+                  (value) =>
+                      value == ProjectType.prose ||
+                      (widget.experimentalFeatures &&
+                          (value != ProjectType.parserFictionPrototype ||
+                              widget.developerMode)),
+                )
                 .map(
                   (value) => DropdownMenuItem(
                     value: value,
                     child: Text(switch (value) {
+                      ProjectType.parserFictionPrototype =>
+                        'Parser IF prototype',
                       ProjectType.prose => 'Prose',
                       ProjectType.screenplay => 'Screenplay',
                       ProjectType.interactiveFiction =>
@@ -2240,6 +2329,9 @@ class AppSettingsDialog extends StatefulWidget {
 class _AppSettingsDialogState extends State<AppSettingsDialog> {
   late bool openLast = widget.controller.openLastProjectOnStartup;
   late bool experimental = widget.controller.experimentalEntityDetection;
+  late bool developerMode = widget.controller.developerMode;
+  late bool experimentalFeatures = widget.controller.experimentalFeatures;
+  late bool exportWizards = widget.controller.exportWizards;
   GemmellSettings gemmell = GemmellSettings();
   late final TextEditingController gemmellName = TextEditingController();
   late final TextEditingController gemmellPronouns = TextEditingController();
@@ -2384,6 +2476,35 @@ class _AppSettingsDialogState extends State<AppSettingsDialog> {
             const Divider(),
             SwitchListTile(
               contentPadding: EdgeInsets.zero,
+              title: const Text('Experimental Features'),
+              subtitle: const Text(
+                'Enable Screenplay and Interactive Fiction, including their import and export formats.',
+              ),
+              value: experimentalFeatures,
+              onChanged: (value) =>
+                  setState(() => experimentalFeatures = value),
+            ),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('Use export wizards'),
+              subtitle: const Text(
+                'Choose a format with Yes/No questions. Turn off to show the original format lists.',
+              ),
+              value: exportWizards,
+              onChanged: (value) => setState(() => exportWizards = value),
+            ),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('Developer Mode'),
+              subtitle: const Text(
+                'Shows unfinished prototypes, including Parser-style IF. Prototype data and UI can change without compatibility guarantees.',
+              ),
+              value: developerMode,
+              onChanged: (value) => setState(() => developerMode = value),
+            ),
+            const Divider(),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
               title: const Text('Enable Gemmell assistant'),
               subtitle: const Text(
                 'Disabled by default. Prompt Bridge only generates and copies a prompt; it sends nothing anywhere.',
@@ -2485,6 +2606,9 @@ class _AppSettingsDialogState extends State<AppSettingsDialog> {
         onPressed: () async {
           await widget.controller.setOpenLastProject(openLast);
           await widget.controller.setExperimentalEntityDetection(experimental);
+          await widget.controller.setDeveloperMode(developerMode);
+          await widget.controller.setExperimentalFeatures(experimentalFeatures);
+          await widget.controller.setExportWizards(exportWizards);
           gemmell.name = gemmellName.text.trim().isEmpty
               ? 'Gemmell McGee'
               : gemmellName.text.trim();
@@ -2502,6 +2626,64 @@ class _AppSettingsDialogState extends State<AppSettingsDialog> {
 }
 
 class _ProjectSettingsDialogState extends State<ProjectSettingsDialog> {
+  late String? coverImage = widget.controller.project!.coverImage;
+  Future<void> pickCover() async {
+    try {
+      final files = await FilePicker.pickFiles(
+        dialogTitle: 'Choose a cover image',
+        type: FileType.custom,
+        allowedExtensions: ['png', 'jpg', 'jpeg'],
+      );
+      if (files.isEmpty) return;
+      final builder = BytesBuilder();
+      await for (final chunk in files.single.readAsByteStream()) {
+        builder.add(chunk);
+        if (builder.length > 10 * 1024 * 1024) {
+          throw const FormatException('Choose an image smaller than 10 MiB.');
+        }
+      }
+      final bytes = builder.takeBytes();
+      final png =
+          bytes.length >= 8 &&
+          bytes[0] == 137 &&
+          bytes[1] == 80 &&
+          bytes[2] == 78 &&
+          bytes[3] == 71;
+      final jpeg =
+          bytes.length >= 3 &&
+          bytes[0] == 255 &&
+          bytes[1] == 216 &&
+          bytes[2] == 255;
+      if (!png && !jpeg) {
+        throw const FormatException('Choose a PNG or JPEG image.');
+      }
+      final codec = await ui.instantiateImageCodec(
+        bytes,
+        targetWidth: 1600,
+        allowUpscaling: false,
+      );
+      try {
+        final frame = await codec.getNextFrame();
+        try {
+          final normalized = await frame.image.toByteData(
+            format: ui.ImageByteFormat.png,
+          );
+          if (mounted && normalized != null) {
+            setState(
+              () => coverImage = base64Encode(normalized.buffer.asUint8List()),
+            );
+          }
+        } finally {
+          frame.image.dispose();
+        }
+      } finally {
+        codec.dispose();
+      }
+    } catch (error) {
+      if (mounted) _showError(context, error);
+    }
+  }
+
   StoryProject get project => widget.controller.project!;
   late final TextEditingController title = TextEditingController(
         text: project.title,
@@ -2529,6 +2711,38 @@ class _ProjectSettingsDialogState extends State<ProjectSettingsDialog> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            if (coverImage != null)
+              Image.memory(
+                base64Decode(coverImage!),
+                height: 180,
+                fit: BoxFit.contain,
+                errorBuilder: (_, error, stack) =>
+                    const Text('Cover image could not be displayed.'),
+              ),
+            Wrap(
+              spacing: 8,
+              children: [
+                TextButton.icon(
+                  onPressed: pickCover,
+                  icon: const Icon(Icons.image_outlined),
+                  label: Text(
+                    coverImage == null
+                        ? 'Add cover image'
+                        : 'Replace cover image',
+                  ),
+                ),
+                if (coverImage != null)
+                  TextButton(
+                    onPressed: () => setState(() => coverImage = null),
+                    child: const Text('Remove cover'),
+                  ),
+              ],
+            ),
+            const Text(
+              'Covers appear in PDF, EPUB, HTML, FB2 and ODT manuscripts. Story-project imports and exports omit covers.',
+            ),
+            const SizedBox(height: 16),
+
             TextField(
               controller: title,
               decoration: const InputDecoration(labelText: 'Title'),
@@ -2680,6 +2894,7 @@ class _ProjectSettingsDialogState extends State<ProjectSettingsDialog> {
       ),
       FilledButton(
         onPressed: () async {
+          project.coverImage = coverImage;
           await widget.controller.updateProjectSettings(
             title: title.text,
             author: author.text,
@@ -2868,6 +3083,10 @@ Future<void> _projectAction(
       await controller.closeProject();
       return;
     }
+    if ((value == 'package' || value == 'document-export') &&
+        !controller.projectEnabled) {
+      return;
+    }
     if (value == 'package') {
       final projectType = controller.project!.type;
       final modeOption = switch (projectType) {
@@ -2881,41 +3100,48 @@ Future<void> _projectAction(
           'Ink story (.ink)',
           'Compiled from the Sōhōkō-sei Story / Choice IR',
         ),
+        ProjectType.parserFictionPrototype => (
+          'sutoriraita',
+          'Sutōrīraitā (.sutoriraita)',
+          'Native prototype project',
+        ),
         ProjectType.prose => (
           'novelist',
           'Novelist story (.nov)',
           'Chapters, scenes and encyclopedia; advanced formatting is simplified',
         ),
       };
-      final selection = await showDialog<String>(
-        context: context,
-        builder: (dialogContext) => SimpleDialog(
-          title: const Text('Export story project'),
-          children: [
-            for (final option in [
-              (
-                'sutoriraita',
-                'Sutōrīraitā (.sutoriraita)',
-                'Complete native project backup',
+      final selection = controller.exportWizards
+          ? await showStoryExportWizard(context, projectType)
+          : await showDialog<String>(
+              context: context,
+              builder: (dialogContext) => SimpleDialog(
+                title: const Text('Export story project'),
+                children: [
+                  for (final option in [
+                    (
+                      'sutoriraita',
+                      'Sutōrīraitā (.sutoriraita)',
+                      'Native project backup; cover omitted',
+                    ),
+                    if (projectType == ProjectType.prose)
+                      (
+                        'hammer',
+                        'Hammer story (.hammer.zip)',
+                        'Unzip into HammerProjects; preserves imported notes and timeline',
+                      ),
+                    modeOption,
+                  ])
+                    SimpleDialogOption(
+                      onPressed: () => Navigator.pop(dialogContext, option.$1),
+                      child: ListTile(
+                        title: Text(option.$2),
+                        subtitle: Text(option.$3),
+                      ),
+                    ),
+                ],
               ),
-              if (projectType == ProjectType.prose)
-                (
-                  'hammer',
-                  'Hammer story (.hammer.zip)',
-                  'Unzip into HammerProjects; preserves imported notes and timeline',
-                ),
-              modeOption,
-            ])
-              SimpleDialogOption(
-                onPressed: () => Navigator.pop(dialogContext, option.$1),
-                child: ListTile(
-                  title: Text(option.$2),
-                  subtitle: Text(option.$3),
-                ),
-              ),
-          ],
-        ),
-      );
+            );
       if (selection == null) return;
       await controller.saveNow();
       if (controller.saveState == SaveState.error) {
@@ -2938,7 +3164,9 @@ Future<void> _projectAction(
       return;
     }
     if (value == 'document-export') {
-      final format = await _chooseExportFormat(context);
+      final format = controller.exportWizards
+          ? await showManuscriptExportWizard(context)
+          : await _chooseExportFormat(context);
       if (format == null) return;
       await controller.saveNow();
       final path = await controller.store.exportDocument(

@@ -110,6 +110,18 @@ class FountainFormat {
 class SohoInkExporter {
   static String encode(StoryProject project) {
     final ir = project.interactiveFiction;
+    final start = ir.nodes
+        .where((node) => node.id == ir.startNodeId)
+        .firstOrNull;
+    if (start == null) {
+      throw const FormatException(
+        'Sōhōkō-sei has no valid start passage to export.',
+      );
+    }
+    final knotNames = <String, String>{};
+    for (final node in ir.nodes) {
+      knotNames[node.id] = _friendlyKnotName(node, start: node == start);
+    }
     final output = StringBuffer(
       '// Generated from Sōhōkō-sei IR by Sutōrīraitā\n',
     );
@@ -118,10 +130,16 @@ class SohoInkExporter {
         'VAR ${_inkId(variable.key)} = ${variable.value.isEmpty ? '0' : variable.value}',
       );
     }
-    if (ir.startNodeId != null) output.writeln('-> ${_inkId(ir.startNodeId!)}');
+    // Resolve through the same immutable ID map used by every knot and choice.
+    // This prevents a displayed/selected node from accidentally becoming entry.
+    output.writeln('-> ${knotNames[start.id]}');
     for (final node in ir.nodes) {
-      output.writeln('\n=== ${_inkId(node.id)} ===');
+      output.writeln('\n=== ${knotNames[node.id]} ===');
       output.writeln('// ${node.title}');
+      final scene = ir.scenes
+          .where((item) => item.id == node.sceneId)
+          .firstOrNull;
+      if (scene != null) output.writeln('// Scene: ${scene.title}');
       output.writeln(node.content.trim());
       for (final effect in node.effects) {
         if (effect.variable.trim().isNotEmpty) {
@@ -134,8 +152,9 @@ class SohoInkExporter {
         final condition = choice.condition?.trim();
         final prefix = condition?.isNotEmpty == true ? '{$condition} ' : '';
         output.writeln('* $prefix[${choice.label}]');
-        if (choice.targetNodeId != null) {
-          output.writeln('    -> ${_inkId(choice.targetNodeId!)}');
+        final target = knotNames[choice.targetNodeId];
+        if (target != null) {
+          output.writeln('    -> $target');
         }
       }
       if (node.isEnding || node.choices.isEmpty) output.writeln('-> END');
@@ -146,5 +165,17 @@ class SohoInkExporter {
   static String _inkId(String value) {
     final clean = value.replaceAll(RegExp(r'[^A-Za-z0-9_]'), '_');
     return RegExp(r'^[0-9]').hasMatch(clean) ? 'n_$clean' : clean;
+  }
+
+  static String _friendlyKnotName(IfNode node, {required bool start}) {
+    var slug = node.title
+        .toLowerCase()
+        .replaceAll(RegExp(r'[^a-z0-9]+'), '_')
+        .replaceAll(RegExp(r'^_+|_+$'), '');
+    if (slug.isEmpty) slug = 'passage';
+    final rawShort = node.id.replaceAll(RegExp(r'[^A-Za-z0-9]'), '');
+    final short = rawShort.substring(0, rawShort.length.clamp(1, 8));
+    final safeShort = _inkId(short);
+    return '${start ? 'start_' : ''}${slug}_$safeShort';
   }
 }

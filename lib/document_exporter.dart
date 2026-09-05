@@ -84,7 +84,7 @@ class DocumentExporter {
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>${_xml(project.title)}</title><style>
 body{max-width:44rem;margin:3rem auto;padding:0 1.3rem;font:18px/1.65 Georgia,serif;color:#26251f;background:#f8f6f0}h1,h2,h3{line-height:1.2}hr{border:0;border-top:1px solid #ccc;margin:2.5rem 0}blockquote{border-left:3px solid #668071;padding-left:1rem;color:#536158}code{background:#eae7de;padding:.1rem .3rem}
-</style></head><body>${md.markdownToHtml(_markdown(project, webLinks: true))}</body></html>''';
+</style></head><body>${project.coverImage == null ? "" : '<img alt="Cover" style="max-width:100%;max-height:90vh" src="data:image/png;base64,${project.coverImage}"/>'}${md.markdownToHtml(_markdown(project, webLinks: true))}</body></html>''';
 
   static String _fb2(StoryProject project) {
     final body = StringBuffer();
@@ -100,7 +100,7 @@ body{max-width:44rem;margin:3rem auto;padding:0 1.3rem;font:18px/1.65 Georgia,se
       body.write('</section>');
     }
     return '''<?xml version="1.0" encoding="UTF-8"?>
-<FictionBook xmlns="http://www.gribuser.ru/xml/fictionbook/2.0"><description><title-info><genre>prose</genre><author><nickname>${_xml(project.author)}</nickname></author><book-title>${_xml(project.title)}</book-title><lang>${_xml(project.language)}</lang></title-info></description><body><title><p>${_xml(project.title)}</p></title>$body</body></FictionBook>''';
+<FictionBook xmlns="http://www.gribuser.ru/xml/fictionbook/2.0" xmlns:l="http://www.w3.org/1999/xlink"><description><title-info><genre>prose</genre><author><nickname>${_xml(project.author)}</nickname></author><book-title>${_xml(project.title)}</book-title>${project.coverImage == null ? "" : '<coverpage><image l:href="#cover"/></coverpage>'}<lang>${_xml(project.language)}</lang></title-info></description><body><title><p>${_xml(project.title)}</p></title>$body</body>${project.coverImage == null ? "" : '<binary id="cover" content-type="image/png">${project.coverImage}</binary>'}</FictionBook>''';
   }
 
   static Uint8List _epub(StoryProject project) {
@@ -111,6 +111,16 @@ body{max-width:44rem;margin:3rem auto;padding:0 1.3rem;font:18px/1.65 Georgia,se
       utf8.encode('application/epub+zip'),
     )..compression = CompressionType.none;
     archive.addFile(mime);
+    if (project.coverImage != null) {
+      final bytes = base64Decode(project.coverImage!);
+      archive.addFile(ArchiveFile('OEBPS/cover.png', bytes.length, bytes));
+      _addText(
+        archive,
+        'OEBPS/cover.xhtml',
+        '<html xmlns="http://www.w3.org/1999/xhtml"><head><title>Cover</title></head><body><img src="cover.png" alt="Cover" style="max-width:100%"/></body></html>',
+      );
+    }
+
     _addText(
       archive,
       'META-INF/container.xml',
@@ -132,7 +142,7 @@ body{max-width:44rem;margin:3rem auto;padding:0 1.3rem;font:18px/1.65 Georgia,se
       archive,
       'OEBPS/content.opf',
       '''<?xml version="1.0" encoding="UTF-8"?>
-<package xmlns="http://www.idpf.org/2007/opf" version="3.0" unique-identifier="id"><metadata xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:identifier id="id">urn:uuid:${_xml(project.id)}</dc:identifier><dc:title>${_xml(project.title)}</dc:title><dc:creator>${_xml(project.author)}</dc:creator><dc:language>${_xml(project.language)}</dc:language></metadata><manifest><item id="book" href="book.xhtml" media-type="application/xhtml+xml"/><item id="css" href="style.css" media-type="text/css"/></manifest><spine><itemref idref="book"/></spine></package>''',
+<package xmlns="http://www.idpf.org/2007/opf" version="3.0" unique-identifier="id"><metadata xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:identifier id="id">urn:uuid:${_xml(project.id)}</dc:identifier><dc:title>${_xml(project.title)}</dc:title><dc:creator>${_xml(project.author)}</dc:creator><dc:language>${_xml(project.language)}</dc:language></metadata><manifest>${project.coverImage == null ? "" : '<item id="cover-image" href="cover.png" media-type="image/png" properties="cover-image"/><item id="cover" href="cover.xhtml" media-type="application/xhtml+xml"/>'}<item id="book" href="book.xhtml" media-type="application/xhtml+xml"/><item id="css" href="style.css" media-type="text/css"/></manifest><spine>${project.coverImage == null ? "" : '<itemref idref="cover"/>'}<itemref idref="book"/></spine></package>''',
     );
     return Uint8List.fromList(ZipEncoder().encode(archive));
   }
@@ -144,7 +154,20 @@ body{max-width:44rem;margin:3rem auto;padding:0 1.3rem;font:18px/1.65 Georgia,se
       ArchiveFile('mimetype', mime.length, mime)
         ..compression = CompressionType.none,
     );
+    if (project.coverImage != null) {
+      final bytes = base64Decode(project.coverImage!);
+      archive.addFile(ArchiveFile('Pictures/cover.png', bytes.length, bytes));
+    }
     final content = StringBuffer();
+    if (project.coverImage != null) {
+      final header = ByteData.sublistView(base64Decode(project.coverImage!));
+      final ratio = header.getUint32(16) / header.getUint32(20);
+      final width = ratio >= 4.5 / 6.5 ? 4.5 : 6.5 * ratio;
+      final height = ratio >= 4.5 / 6.5 ? 4.5 / ratio : 6.5;
+      content.write(
+        '<text:p><draw:frame draw:name="Cover" text:anchor-type="as-char" svg:width="${width}in" svg:height="${height}in"><draw:image xlink:href="Pictures/cover.png" xlink:type="simple" xlink:show="embed" xlink:actuate="onLoad"/></draw:frame></text:p>',
+      );
+    }
     content.write(
       '<text:h text:outline-level="1">${_xml(project.title)}</text:h>',
     );
@@ -168,13 +191,13 @@ body{max-width:44rem;margin:3rem auto;padding:0 1.3rem;font:18px/1.65 Georgia,se
       archive,
       'content.xml',
       '''<?xml version="1.0" encoding="UTF-8"?>
-<office:document-content xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0" xmlns:text="urn:oasis:names:tc:opendocument:xmlns:text:1.0" office:version="1.3"><office:body><office:text>$content</office:text></office:body></office:document-content>''',
+<office:document-content xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0" xmlns:text="urn:oasis:names:tc:opendocument:xmlns:text:1.0" xmlns:draw="urn:oasis:names:tc:opendocument:xmlns:drawing:1.0" xmlns:svg="urn:oasis:names:tc:opendocument:xmlns:svg-compatible:1.0" xmlns:xlink="http://www.w3.org/1999/xlink" office:version="1.3"><office:body><office:text>$content</office:text></office:body></office:document-content>''',
     );
     _addText(
       archive,
       'META-INF/manifest.xml',
       '''<?xml version="1.0" encoding="UTF-8"?>
-<manifest:manifest xmlns:manifest="urn:oasis:names:tc:opendocument:xmlns:manifest:1.0" manifest:version="1.3"><manifest:file-entry manifest:full-path="/" manifest:media-type="application/vnd.oasis.opendocument.text"/><manifest:file-entry manifest:full-path="content.xml" manifest:media-type="text/xml"/></manifest:manifest>''',
+<manifest:manifest xmlns:manifest="urn:oasis:names:tc:opendocument:xmlns:manifest:1.0" manifest:version="1.3"><manifest:file-entry manifest:full-path="/" manifest:media-type="application/vnd.oasis.opendocument.text"/><manifest:file-entry manifest:full-path="content.xml" manifest:media-type="text/xml"/>${project.coverImage == null ? "" : '<manifest:file-entry manifest:full-path="Pictures/cover.png" manifest:media-type="image/png"/>'}</manifest:manifest>''',
     );
     return Uint8List.fromList(ZipEncoder().encode(archive));
   }
@@ -210,6 +233,23 @@ body{max-width:44rem;margin:3rem auto;padding:0 1.3rem;font:18px/1.65 Georgia,se
     Map<String, int> measuredPages,
   ) {
     final document = pw.Document(title: project.title, author: project.author);
+    if (project.coverImage != null) {
+      document.addPage(
+        pw.Page(
+          pageFormat: PdfPageFormat(
+            6 * PdfPageFormat.inch,
+            9 * PdfPageFormat.inch,
+          ),
+          build: (_) => pw.Center(
+            child: pw.Image(
+              pw.MemoryImage(base64Decode(project.coverImage!)),
+              fit: pw.BoxFit.contain,
+            ),
+          ),
+        ),
+      );
+    }
+
     document.addPage(
       pw.MultiPage(
         theme: pw.ThemeData.withFont(base: regular, bold: bold),

@@ -151,7 +151,8 @@ void main() {
     expect(ink, contains('-> start'));
     expect(ink, contains('{has_key} [Open it]'));
     expect(ink, contains('~ visits = visits + 1'));
-    expect(ink, contains('=== ending ==='));
+    expect(ink, contains('=== outside_ending ==='));
+    expect(ink, contains('-> outside_ending'));
   });
 
   test(
@@ -183,16 +184,21 @@ void main() {
     },
   );
 
-  testWidgets('creation dialog offers all document models', (tester) async {
-    await tester.pumpWidget(
-      const MaterialApp(home: Scaffold(body: CreateProjectDialog())),
-    );
-    expect(find.text('Document model'), findsOneWidget);
-    await tester.tap(find.text('Prose').last);
-    await tester.pumpAndSettle();
-    expect(find.text('Screenplay'), findsOneWidget);
-    expect(find.text('Interactive fiction (Story / Choice)'), findsOneWidget);
-  });
+  testWidgets(
+    'creation dialog offers experimental document models when enabled',
+    (tester) async {
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: Scaffold(body: CreateProjectDialog(experimentalFeatures: true)),
+        ),
+      );
+      expect(find.text('Document model'), findsOneWidget);
+      await tester.tap(find.text('Prose').last);
+      await tester.pumpAndSettle();
+      expect(find.text('Screenplay'), findsOneWidget);
+      expect(find.text('Interactive fiction (Story / Choice)'), findsOneWidget);
+    },
+  );
 
   for (final type in [ProjectType.screenplay, ProjectType.interactiveFiction]) {
     testWidgets('${type.key} editor fits a small phone', (tester) async {

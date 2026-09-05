@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'dart:convert';
+import 'dart:ui' show Offset;
 
 import 'package:flutter/foundation.dart';
 import 'package:uuid/uuid.dart';
@@ -6,6 +8,8 @@ import 'package:uuid/uuid.dart';
 import 'models.dart';
 import 'entity_detector.dart';
 import 'project_store.dart';
+
+part 'manuscript_operations.dart';
 
 enum SaveState { saved, saving, dirty, error }
 
@@ -15,6 +19,13 @@ class ProjectController extends ChangeNotifier {
   ProjectController(this.store);
   final ProjectStore store;
   final Uuid _uuid = const Uuid();
+  final List<_HistoryFrame> _undo = [], _redo = [];
+  String? _editGroup;
+  final Set<String> selectedSceneIds = {};
+  String? selectionAnchor;
+  int editorRevision = 0;
+  ({int start, int end})? requestedSceneRange;
+
   StoryProject? project;
   StoryScene? selectedScene;
   SaveState saveState = SaveState.saved;
@@ -26,6 +37,9 @@ class ProjectController extends ChangeNotifier {
   int autosaveDelayMs = 700;
   bool openLastProjectOnStartup = false;
   bool experimentalEntityDetection = false;
+  bool developerMode = false;
+  bool experimentalFeatures = false;
+  bool exportWizards = true;
   WorkspaceArea area = WorkspaceArea.manuscript;
   EncyclopediaEntry? selectedEntry;
   IfNode? selectedIfNode;
@@ -36,6 +50,12 @@ class ProjectController extends ChangeNotifier {
     autosaveDelayMs = await store.loadAutosaveDelay();
     openLastProjectOnStartup = await store.loadOpenLastProject();
     experimentalEntityDetection = await store.loadExperimentalEntityDetection();
+    developerMode = await store.loadDeveloperMode();
+    experimentalFeatures = await store.loadPreference(
+      "experimentalFeatures",
+      false,
+    );
+    exportWizards = await store.loadPreference("exportWizards", true);
     final discovered = await store.discoverProjects();
     project = openLastProjectOnStartup ? await store.openLast() : null;
     if (openLastProjectOnStartup && project == null && discovered.isNotEmpty) {
@@ -51,6 +71,12 @@ class ProjectController extends ChangeNotifier {
   void useProject(StoryProject value) {
     _saveTimer?.cancel();
     project = value;
+    _undo.clear();
+    _redo.clear();
+    selectedSceneIds.clear();
+    selectionAnchor = null;
+    requestedSceneRange = null;
+    _editGroup = null;
     selectedScene = value.sections
         .expand((section) => section.scenes)
         .firstOrNull;
@@ -96,13 +122,63 @@ class ProjectController extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> setExperimentalFeatures(bool value) async {
+    experimentalFeatures = value;
+    await store.savePreference('experimentalFeatures', value);
+    notifyListeners();
+  }
+
+  Future<void> setExportWizards(bool value) async {
+    exportWizards = value;
+    await store.savePreference('exportWizards', value);
+    notifyListeners();
+  }
+
+  bool get projectEnabled =>
+      project == null ||
+      project!.type == ProjectType.prose ||
+      (experimentalFeatures &&
+          (project!.type != ProjectType.parserFictionPrototype ||
+              developerMode));
+
+  void moveChapter(StorySection chapter, int insertionIndex) {
+    _checkpoint('Move chapter');
+    final sections = project!.sections;
+    final old = sections.indexOf(chapter);
+    if (old < 0) return;
+    sections.removeAt(old);
+    if (old < insertionIndex) insertionIndex--;
+    sections.insert(insertionIndex.clamp(0, sections.length), chapter);
+    changed();
+  }
+
+  void moveSceneTo(
+    StoryScene scene,
+    StorySection destination,
+    int insertionIndex,
+  ) {
+    moveScenes(
+      selectedSceneIds.contains(scene.id) ? selectedScenes : [scene],
+      destination,
+      insertionIndex,
+    );
+  }
+
+  Future<void> setDeveloperMode(bool value) async {
+    developerMode = value;
+    await store.saveDeveloperMode(value);
+    notifyListeners();
+  }
+
   void showArea(WorkspaceArea value) {
     area = value;
     notifyListeners();
   }
 
   void select(StoryScene scene) {
+    requestedSceneRange = null;
     selectedScene = scene;
+    _editGroup = null;
     notifyListeners();
   }
 
@@ -115,6 +191,7 @@ class ProjectController extends ChangeNotifier {
 
   void updateContent(String content) {
     if (selectedScene == null || selectedScene!.content == content) return;
+    _checkpoint('Edit scene', group: 'text:${selectedScene!.id}');
     selectedScene!
       ..content = content
       ..updatedAt = DateTime.now();
@@ -131,6 +208,7 @@ class ProjectController extends ChangeNotifier {
     required String title,
     required EncyclopediaType type,
   }) {
+    _checkpoint('Add encyclopedia entry');
     final entry = EncyclopediaEntry(
       id: _uuid.v4(),
       title: title.trim(),
@@ -147,6 +225,7 @@ class ProjectController extends ChangeNotifier {
 
   void updateEntryContent(String content) {
     if (selectedEntry == null || selectedEntry!.content == content) return;
+    _checkpoint('Edit entry', group: 'entry:${selectedEntry!.id}');
     selectedEntry!
       ..content = content
       ..updatedAt = DateTime.now();
@@ -158,6 +237,7 @@ class ProjectController extends ChangeNotifier {
     String? title,
     EncyclopediaType? type,
   }) {
+    _checkpoint('Edit entry');
     if (title != null && title.trim().isNotEmpty) entry.title = title.trim();
     if (type != null) entry.type = type;
     entry.updatedAt = DateTime.now();
@@ -165,12 +245,14 @@ class ProjectController extends ChangeNotifier {
   }
 
   void setEntrySubtype(EncyclopediaEntry entry, String? subtype) {
+    _checkpoint('Edit entry');
     entry.subtype = subtype?.trim().isEmpty == true ? null : subtype?.trim();
     entry.updatedAt = DateTime.now();
     changed();
   }
 
   void setEntryField(EncyclopediaEntry entry, String key, String value) {
+    _checkpoint('Edit entry');
     if (value.trim().isEmpty) {
       entry.fields.remove(key);
     } else {
@@ -181,6 +263,7 @@ class ProjectController extends ChangeNotifier {
   }
 
   void addCustomEntryField(EncyclopediaEntry entry, String label) {
+    _checkpoint('Edit entry');
     final clean = label.trim();
     if (clean.isEmpty) return;
     entry.fields.putIfAbsent('custom:$clean', () => '');
@@ -208,6 +291,7 @@ class ProjectController extends ChangeNotifier {
     required EncyclopediaEntry to,
     required RelationTypeDefinition type,
   }) {
+    _checkpoint('Add relation');
     final relation = EntryRelation(
       id: _uuid.v4(),
       fromEntryId: from.id,
@@ -220,6 +304,7 @@ class ProjectController extends ChangeNotifier {
   }
 
   void setRelationField(EntryRelation relation, String key, String value) {
+    _checkpoint('Edit relation');
     if (value.trim().isEmpty) {
       relation.fields.remove(key);
     } else {
@@ -229,16 +314,39 @@ class ProjectController extends ChangeNotifier {
   }
 
   void deleteRelation(EntryRelation relation) {
+    _checkpoint('Delete relation');
     project!.relations.remove(relation);
     changed();
   }
 
   void deleteEntry(EncyclopediaEntry entry) {
+    _checkpoint('Trash entry');
+    final relations = project!.relations
+        .where((r) => r.fromEntryId == entry.id || r.toEntryId == entry.id)
+        .toList();
+    // Keep a copy with either endpoint so restoration order cannot lose the relation.
+    for (final item in project!.trash.where((t) => t['kind'] == 'entry')) {
+      for (final value in item['relations'] as List? ?? []) {
+        final relation = EntryRelation.fromJson(
+          (value as Map).cast<String, Object?>(),
+        );
+        if ((relation.fromEntryId == entry.id ||
+                relation.toEntryId == entry.id) &&
+            !relations.any((r) => r.id == relation.id)) {
+          relations.add(relation);
+        }
+      }
+    }
+    project!.trash.add({
+      'id': _uuid.v4(),
+      'kind': 'entry',
+      'title': entry.title,
+      'data': {...entry.toJson(), 'body': entry.content},
+      'relations': relations.map((r) => r.toJson()).toList(),
+      'deletedAt': DateTime.now().toIso8601String(),
+    });
     project!.encyclopedia.remove(entry);
-    project!.relations.removeWhere(
-      (relation) =>
-          relation.fromEntryId == entry.id || relation.toEntryId == entry.id,
-    );
+    project!.relations.removeWhere(relations.contains);
     if (selectedEntry == entry) {
       selectedEntry = project!.encyclopedia.firstOrNull;
     }
@@ -249,6 +357,8 @@ class ProjectController extends ChangeNotifier {
     project!,
     experimentalObjectsAndEvents: experimentalEntityDetection,
   );
+
+  void _selectionChanged() => notifyListeners();
 
   void changed() {
     saveState = SaveState.dirty;
@@ -316,6 +426,7 @@ class ProjectController extends ChangeNotifier {
   }
 
   StoryScene addScene(StorySection section) {
+    _checkpoint('Add scene');
     final scene = StoryScene(
       id: _uuid.v4(),
       title: 'Untitled scene',
@@ -338,17 +449,36 @@ class ProjectController extends ChangeNotifier {
   }
 
   StorySection addSection() {
+    _checkpoint('Add chapter');
     final section = StorySection(
       id: _uuid.v4(),
       title: 'New chapter',
       scenes: [],
     );
     project!.sections.add(section);
-    addScene(section);
+    final scene = StoryScene(
+      id: _uuid.v4(),
+      title: 'Untitled scene',
+      content: '',
+      updatedAt: DateTime.now(),
+    );
+    section.scenes.add(scene);
+    if (project!.type == ProjectType.screenplay) {
+      project!.screenplay[scene.id] = [
+        ScreenplayElement(
+          id: _uuid.v4(),
+          type: ScreenplayElementType.sceneHeading,
+          text: 'INT. LOCATION - DAY',
+        ),
+      ];
+    }
+    selectedScene = scene;
+    changed();
     return section;
   }
 
   void renameScene(StoryScene scene, String title) {
+    _checkpoint('Rename scene');
     if (title.trim().isNotEmpty) {
       scene.title = title.trim();
       scene.updatedAt = DateTime.now();
@@ -357,57 +487,54 @@ class ProjectController extends ChangeNotifier {
   }
 
   void renameSection(StorySection section, String title) {
+    _checkpoint('Rename chapter');
     if (title.trim().isNotEmpty) {
       section.title = title.trim();
       changed();
     }
   }
 
-  void deleteScene(StoryScene scene) {
-    final section = sectionFor(scene);
-    if (section == null) return;
-    section.scenes.remove(scene);
-    project!.screenplay.remove(scene.id);
-    if (selectedScene == scene) {
-      selectedScene = project!.sections
-          .expand((item) => item.scenes)
-          .firstOrNull;
-    }
-    changed();
-  }
+  void deleteScene(StoryScene scene) => trashScenes([scene]);
 
   void deleteSection(StorySection section) {
-    if (project!.sections.length == 1) return;
-    final selectedWasInside =
-        selectedScene != null && section.scenes.contains(selectedScene);
+    if (!project!.sections.contains(section)) return;
+    _checkpoint('Trash chapter');
+    project!.trash.add({
+      'id': _uuid.v4(),
+      'kind': 'chapter',
+      'title': section.title,
+      'index': project!.sections.indexOf(section),
+      'data': _chapterData(section),
+      'screenplay': _screenplayData(section.scenes),
+      'deletedAt': DateTime.now().toIso8601String(),
+    });
     project!.sections.remove(section);
-    if (selectedWasInside) {
-      selectedScene = project!.sections
-          .expand((item) => item.scenes)
-          .firstOrNull;
+    for (final scene in section.scenes) {
+      project!.screenplay.remove(scene.id);
+      selectedSceneIds.remove(scene.id);
+    }
+    if (section.scenes.contains(selectedScene)) {
+      selectedScene = allScenes.firstOrNull;
     }
     changed();
   }
 
   void reorderScene(StorySection section, int oldIndex, int newIndex) {
+    _checkpoint('Reorder scene');
     final scene = section.scenes.removeAt(oldIndex);
     section.scenes.insert(newIndex, scene);
     changed();
   }
 
-  void moveScene(StoryScene scene, StorySection destination) {
-    final source = sectionFor(scene);
-    if (source == null || source == destination) return;
-    source.scenes.remove(scene);
-    destination.scenes.add(scene);
-    changed();
-  }
+  void moveScene(StoryScene scene, StorySection destination) =>
+      moveSceneTo(scene, destination, destination.scenes.length);
 
   void updateScreenplayElement(
     ScreenplayElement element, {
     String? text,
     ScreenplayElementType? type,
   }) {
+    _checkpoint('Edit screenplay');
     if (text != null) element.text = text;
     if (type != null) element.type = type;
     changed();
@@ -418,6 +545,7 @@ class ProjectController extends ChangeNotifier {
     int index,
     ScreenplayElementType type,
   ) {
+    _checkpoint('Add screenplay element');
     final element = ScreenplayElement(id: _uuid.v4(), type: type);
     final elements = project!.screenplay.putIfAbsent(scene.id, () => []);
     elements.insert(index.clamp(0, elements.length), element);
@@ -426,6 +554,7 @@ class ProjectController extends ChangeNotifier {
   }
 
   void deleteScreenplayElement(StoryScene scene, ScreenplayElement element) {
+    _checkpoint('Delete screenplay element');
     final elements = project!.screenplay[scene.id];
     if (elements == null || elements.length <= 1) return;
     elements.remove(element);
@@ -439,9 +568,12 @@ class ProjectController extends ChangeNotifier {
 
   IfNode addIfNode() {
     final index = project!.interactiveFiction.nodes.length;
+    final sceneId =
+        selectedIfNode?.sceneId ?? project!.interactiveFiction.scenes.first.id;
     final node = IfNode(
       id: _uuid.v4(),
       title: 'Passage ${index + 1}',
+      sceneId: sceneId,
       x: (index % 4) * 240,
       y: (index ~/ 4) * 180,
     );
@@ -456,11 +588,31 @@ class ProjectController extends ChangeNotifier {
     String? title,
     String? content,
     bool? ending,
+    bool? endsScene,
+    String? sceneId,
   }) {
     if (title != null && title.trim().isNotEmpty) node.title = title.trim();
     if (content != null) node.content = content;
     if (ending != null) node.isEnding = ending;
+    if (endsScene != null) node.endsScene = endsScene;
+    if (sceneId != null) node.sceneId = sceneId;
     changed();
+  }
+
+  void moveIfNode(IfNode node, Offset delta) {
+    node.x = (node.x + delta.dx).clamp(0, 1100);
+    node.y = (node.y + delta.dy).clamp(0, 740);
+    changed();
+  }
+
+  IfScene addIfScene() {
+    final scene = IfScene(
+      id: _uuid.v4(),
+      title: 'Scene ${project!.interactiveFiction.scenes.length + 1}',
+    );
+    project!.interactiveFiction.scenes.add(scene);
+    changed();
+    return scene;
   }
 
   void setIfStart(IfNode node) {

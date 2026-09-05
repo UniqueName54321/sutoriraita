@@ -1,5 +1,49 @@
 # Changelog
 
+## v0.1.2 pre-alpha — 2026-09-05
+
+- Introduce a question-driven Gemmell Wizard for manuscript selections, scenes,
+  whole-story audits and encyclopedia entries. Each recommendation explains the
+  tool with an example. A separate **Use Gemmell wizard** setting restores the
+  original lists; the export wizard preference is independent.
+- Add **Discover encyclopedia entries**, with current scene, current chapter and
+  entire manuscript scope. Prompt Bridge includes named source scenes and known
+  encyclopedia names/aliases, and requests evidence-backed proposals for review.
+- Split Prose scenes at the cursor; merge selected scenes in manuscript order;
+  duplicate scenes or chapters with fresh IDs and copied metadata. Internal links
+  within duplicated chunks target their copies; merging redirects scene links.
+- Add scene checkboxes, Shift-range selection, chapter selection and batch move,
+  duplicate, merge and trash actions. Dragging a selected scene moves its selected
+  chunk. The Move dialog specifies a destination chapter and insertion position.
+- Add POV, location, fictional date/time and status metadata to scenes.
+- Add literal project search/replace across scene bodies and optional encyclopedia
+  bodies, with case/whole-word controls, result previews and undo.
+- Add encyclopedia aliases and mention backlinks that open the matching scene and
+  select the text. Discovery recognizes existing aliases and avoids duplicates.
+- Move deleted scenes, chapters and encyclopedia entries to persistent Trash,
+  with restore. Native packages preserve trash; manuscript exports omit it.
+- Add bounded session undo/redo for manuscript operations, metadata, search/replace
+  and encyclopedia changes, grouping consecutive prose edits. Keyboard shortcuts:
+  Ctrl+Alt+Z / Ctrl+Alt+Y for action undo/redo, Ctrl+Shift+F for project search.
+- Version `0.1.2+7` is separate from v0.1.1; optional native fields remain backward
+  compatible with format 1. Older app versions may discard the new fields.
+
+## v0.1.1 pre-alpha — 2026-09-05
+
+- Drag chapter grips to reorder whole chapters, with all their scenes. Drag scene
+  grips between positions in the same chapter or into another chapter, including
+  empty chapters. Drop on a chapter title to insert at its start.
+- Add, replace and remove PNG/JPEG covers in Project settings. Covers persist
+  locally and appear in PDF, EPUB, HTML, FB2 and ODT manuscript exports. Plain
+  text and Markdown omit covers; all story-project transfers strip covers.
+- Use Yes/No export wizards by default, with Back, Cancel and a final format
+  confirmation. Disable Use export wizards in App settings for the original lists.
+- Add Experimental Features, disabled by default. Screenplay and Interactive
+  Fiction creation, editors and format actions require it. Existing experimental
+  projects remain intact and can be edited again after enabling the setting.
+  Parser IF additionally requires the existing Developer Mode setting.
+- Version `0.1.1+6` is a separate release from v0.1.0; native format remains 1.
+
 ## v0.1.0 pre-alpha — 2026-09-01
 
 **Stories are no longer assumed to be linear prose.**

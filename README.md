@@ -1,15 +1,21 @@
 # Sutōrīraitā
 
-**v0.1.0 pre-alpha — expect bugs.** Do not trust this program with the only copy
+**v0.1.2 pre-alpha — expect bugs.** Do not trust this program with the only copy
 of your writing. Keep independent backups. macOS and iOS are untested or rarely
 tested and are especially likely to have bugs, even when their builds compile.
 
-The **v0.1.0 update** introduces an extensible document model: **stories are no
-longer assumed to be linear prose**. New projects can be Prose, Screenplay, or
-Interactive Fiction (Story / Choice). Existing projects open as Prose without a
-migration. Hammer transfer, responsive layouts, and previous exports remain available.
+The **v0.1.2 update** adds a question-driven Gemmell Wizard and encyclopedia
+discovery, plus split/merge, duplication, multi-selection, metadata, project
+search/replace, aliases, backlinks, persistent trash, and action undo/redo.
+Prose remains the default focus; enable **Experimental Features** for Screenplay
+or Interactive Fiction. The **Use Gemmell wizard** preference is independent of
+**Use export wizards**. Gemmell still uses Prompt Bridge: copy the prepared prompt
+to your chatbot and review its suggestions manually.
+
+This release includes the v0.1.1 editing/export improvements and the v0.1.2
+Gemmell and manuscript tools. Earlier release downloads remain available.
 See [CHANGELOG.md](CHANGELOG.md) for the changes in each version, or
-[download v0.1.0 pre-alpha](https://github.com/UniqueName54321/sutoriraita/releases/tag/v0.1.0-pre-alpha).
+[download v0.1.2 pre-alpha](https://github.com/UniqueName54321/sutoriraita/releases/tag/v0.1.2-pre-alpha).
 
 A calm, local-first story-writing workspace targeting Windows, Android, Linux,
 macOS and iOS.
@@ -17,20 +23,20 @@ macOS and iOS.
 ## Download the app
 
 You do not need to build the app yourself. The latest published builds are
-**v0.1.0 pre-alpha**:
+**v0.1.2 pre-alpha**:
 
 <!-- Update the version and every asset link below when publishing a new release. -->
 
 | Platform | Download | Getting started |
 | --- | --- | --- |
-| Windows (64-bit) | [Download ZIP](https://github.com/UniqueName54321/sutoriraita/releases/download/v0.1.0-pre-alpha/sutoriraita-v0.1.0-pre-alpha-windows.zip) | Extract the **whole ZIP**, then run `sutoriraita.exe`. Keep its accompanying files together. |
-| macOS | [Download app ZIP](https://github.com/UniqueName54321/sutoriraita/releases/download/v0.1.0-pre-alpha/sutoriraita-v0.1.0-pre-alpha-macos.zip) | Extract and move `sutoriraita.app` to Applications. This build is unnotarized, so macOS may block it. |
-| Linux (x86-64) | [Download tar.gz](https://github.com/UniqueName54321/sutoriraita/releases/download/v0.1.0-pre-alpha/sutoriraita-v0.1.0-pre-alpha-linux.tar.gz) | Extract the full archive, then run `sutoriraita`. Run `sh install.sh` to add desktop/file-type integration. Requires GTK 3. |
-| Android | [Download APK](https://github.com/UniqueName54321/sutoriraita/releases/download/v0.1.0-pre-alpha/sutoriraita-v0.1.0-pre-alpha-android.apk) | Open the APK on your device and allow installation from that source when prompted. This is a development-signed build. |
-| iOS | [Download unsigned app ZIP](https://github.com/UniqueName54321/sutoriraita/releases/download/v0.1.0-pre-alpha/sutoriraita-v0.1.0-pre-alpha-ios-unsigned.zip) | **Not ready to install.** Apple signing and provisioning are required; there is no signed IPA or TestFlight release yet. |
+| Windows (64-bit) | [Download ZIP](https://github.com/UniqueName54321/sutoriraita/releases/download/v0.1.2-pre-alpha/sutoriraita-v0.1.2-pre-alpha-windows.zip) | Extract the **whole ZIP**, then run `sutoriraita.exe`. Keep its accompanying files together. |
+| macOS | [Download app ZIP](https://github.com/UniqueName54321/sutoriraita/releases/download/v0.1.2-pre-alpha/sutoriraita-v0.1.2-pre-alpha-macos.zip) | Extract and move `sutoriraita.app` to Applications. This build is unnotarized, so macOS may block it. |
+| Linux (x86-64) | [Download tar.gz](https://github.com/UniqueName54321/sutoriraita/releases/download/v0.1.2-pre-alpha/sutoriraita-v0.1.2-pre-alpha-linux.tar.gz) | Extract the full archive, then run `sutoriraita`. Run `sh install.sh` to add desktop/file-type integration. Requires GTK 3. |
+| Android | [Download APK](https://github.com/UniqueName54321/sutoriraita/releases/download/v0.1.2-pre-alpha/sutoriraita-v0.1.2-pre-alpha-android.apk) | Open the APK on your device and allow installation from that source when prompted. This is a development-signed build. |
+| iOS | [Download unsigned app ZIP](https://github.com/UniqueName54321/sutoriraita/releases/download/v0.1.2-pre-alpha/sutoriraita-v0.1.2-pre-alpha-ios-unsigned.zip) | **Not ready to install.** Apple signing and provisioning are required; there is no signed IPA or TestFlight release yet. |
 
-See the [release notes](https://github.com/UniqueName54321/sutoriraita/releases/tag/v0.1.0-pre-alpha)
-and [SHA-256 checksums](https://github.com/UniqueName54321/sutoriraita/releases/download/v0.1.0-pre-alpha/SHA256SUMS).
+See the [release notes](https://github.com/UniqueName54321/sutoriraita/releases/tag/v0.1.2-pre-alpha)
+and [SHA-256 checksums](https://github.com/UniqueName54321/sutoriraita/releases/download/v0.1.2-pre-alpha/SHA256SUMS).
 **Android upgrades:** development signing keys can differ between builds, preventing
 an in-place upgrade. Back up your projects before uninstalling an existing version:
 uninstalling removes its app-private project library.
@@ -206,3 +212,33 @@ for all five platforms, CI artifacts, signing requirements and testing limits.
 
 [GitHub CI and build artifacts](https://github.com/UniqueName54321/sutoriraita/actions/workflows/build.yml)
 cover Windows, macOS, Linux, Android and unsigned iOS.
+
+## Editing features in v0.1.2
+
+- In **Write** mode, use **Formatting and scene actions → Split scene at cursor**.
+  Scene menus offer duplicate, merge with next, and scene details. Merging keeps
+  the first scene's title/metadata and puts the other original scenes in Trash.
+- Use scene checkboxes for multi-selection; Shift-click a checkbox for a range.
+  Chapter menus can select all their scenes. Use the selected-scene menu or drag
+  a selected grip to move the whole selection. **Move selected** allows an exact
+  destination chapter and position, including positions outside the current view.
+- Use **Scene details** for POV, location, date/time and status. Fictional dates
+  are free text. Metadata is retained in native projects and duplicated scenes.
+- Use **Project menu → Project search / replace** (Ctrl+Shift+F). Search is literal,
+  with optional case and whole-word matching; it covers active scene body text
+  and, by default, encyclopedia body text. Results preview matches and link to
+  their source. Titles, metadata and Trash are excluded from replacement.
+- In an encyclopedia entry's menu, edit **Aliases** or choose **Where is this
+  mentioned?** to open mentions, including aliases, in the manuscript.
+- Deleted scenes, chapters and entries go to **Project menu → Trash / restore**.
+  Trash persists across restarts and native backups. It is omitted from manuscript
+  exports and external story formats. Existing whole-project archive/delete
+  controls remain separate.
+- Use sidebar undo/redo or **Ctrl+Alt+Z / Ctrl+Alt+Y** for action history. History
+  holds the last 60 actions in the current project session, including grouped
+  typing edits; it resets when switching projects. Native editor text undo remains
+  available. Undo can recover the exact pre-merge scene structure and links.
+- With Gemmell enabled, its tools button opens the wizard. Discovery asks whether
+  to include the full manuscript or current chapter, otherwise using the scene.
+  Its prepared prompt includes scene references and known names/aliases; it does
+  not create encyclopedia entries or run an AI service automatically.

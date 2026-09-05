@@ -238,3 +238,10 @@ artifact checksums before publishing the pre-release.
 - Windows packaging uses a separate checkout because the existing main-checkout
   executable is running. Native OS picker interaction and other platform builds
   have not been interactively verified for this version.
+
+- Isolated Windows release build succeeded from source commit `c8e45f6`; the
+  executable reports `0.1.2+7`. Packaged and checked the executable, Flutter runtime,
+  application snapshot, ICU data and registration script in
+  `sutoriraita-v0.1.2-pre-alpha-windows.zip`.
+- ZIP SHA-256: `CA423F2C4F003BF5773C3DC1EF56C2431E3898AD3C9F65B041E5C41DEBBEDDAE`.
+- Existing v0.1.1 branch and ZIP remain available. Nothing was published.

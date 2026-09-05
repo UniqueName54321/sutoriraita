@@ -110,10 +110,12 @@ class ExportWizard<T> extends StatefulWidget {
     required this.title,
     required this.root,
     this.note,
+    this.confirmLabel = 'Export',
   });
   final String title;
   final ExportDecision<T> root;
   final String? note;
+  final String confirmLabel;
   @override
   State<ExportWizard<T>> createState() => _ExportWizardState<T>();
 }
@@ -162,7 +164,7 @@ class _ExportWizardState<T> extends State<ExportWizard<T>> {
       ] else
         FilledButton(
           onPressed: () => Navigator.pop(context, current.value),
-          child: const Text('Export'),
+          child: Text(widget.confirmLabel),
         ),
     ],
   );

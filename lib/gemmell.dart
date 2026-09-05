@@ -4,6 +4,11 @@ import 'models.dart';
 import 'genre_packs.dart';
 
 enum GemmellTool {
+  discoverEncyclopediaEntries(
+    'Discover encyclopedia entries',
+    false,
+    'Find characters, places, organizations, objects and events that deserve encyclopedia entries in the supplied scope. Compare names and aliases against the existing encyclopedia first; propose additions only for genuinely new entities and updates for existing ones. For each candidate give a canonical name, possible aliases, proposed type, brief evidence quoted from a named scene, and explicit facts separately from inferences. Do not invent facts or claim to have created entries. Return a reviewable list for the author.',
+  ),
   proofreadSelection(
     'Proofread selection',
     true,
@@ -261,6 +266,7 @@ enum GemmellTool {
   final bool proseTransformation;
 
   String get example => switch (this) {
+    discoverEncyclopediaEntries => 'Example: find Mika in this chapter, recognize her nickname, and suggest a character entry with scene evidence.',
     proofreadSelection =>
       'Example: flag “teh door” and explain the correction.',
     suggestRewrite =>
@@ -359,6 +365,7 @@ class GemmellSettings {
 
   GemmellSettings({
     this.enabled = false,
+    this.useWizard = true,
     this.name = 'Gemmell McGee',
     this.pronouns = 'he/him',
     this.tone = 'No tone — preserve chatbot personality',
@@ -368,6 +375,7 @@ class GemmellSettings {
   });
 
   bool enabled;
+  bool useWizard;
   String name;
   String pronouns;
   String tone;
@@ -381,6 +389,7 @@ class GemmellSettings {
     final storedEditingStyle = prefs.getString('gemmell.editingStyle');
     return GemmellSettings(
       enabled: prefs.getBool('gemmell.enabled') ?? false,
+      useWizard: prefs.getBool('gemmell.useWizard') ?? true,
       name: prefs.getString('gemmell.name') ?? 'Gemmell McGee',
       pronouns: prefs.getString('gemmell.pronouns') ?? 'he/him',
       tone: tones.contains(storedTone) ? storedTone! : tones.first,
@@ -399,6 +408,7 @@ class GemmellSettings {
   Future<void> save() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('gemmell.enabled', enabled);
+    await prefs.setBool('gemmell.useWizard', useWizard);
     await prefs.setString('gemmell.name', name);
     await prefs.setString('gemmell.pronouns', pronouns);
     await prefs.setString('gemmell.tone', tone);
@@ -455,7 +465,7 @@ ${encyclopedia.trim()}
 --- END ENCYCLOPEDIA SNAPSHOT ---''';
     final materialKind = tool.encyclopediaOnly
         ? 'ENCYCLOPEDIA ENTRY'
-        : (tool.requiresSelection ? 'SELECTION' : 'SCENE');
+        : (tool.requiresSelection ? 'SELECTION' : subjectKind.toUpperCase());
     return '''You are assisting with a Sutōrīraitā writing project through Prompt Bridge.
 $personality
 Assistant identity: $name ($pronouns).
@@ -510,6 +520,7 @@ String gemmellEncyclopediaContext(StoryProject project) {
             })
             .join('\n');
         return '''## ${entry.title}
+Aliases: ${entry.aliases.join(', ')}
 Type: ${entry.type.label}${entry.subtype == null ? '' : ' / ${entry.subtype}'}
 ${facts.isEmpty ? 'Structured facts: (none)' : 'Structured facts:\n$facts'}
 ${relations.isEmpty ? '' : 'Relations:\n$relations\n'}

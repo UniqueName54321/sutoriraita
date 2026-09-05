@@ -1,18 +1,19 @@
 # Sutōrīraitā
 
-**v0.1.1 pre-alpha — expect bugs.** Do not trust this program with the only copy
+**v0.1.2 pre-alpha — expect bugs.** Do not trust this program with the only copy
 of your writing. Keep independent backups. macOS and iOS are untested or rarely
 tested and are especially likely to have bugs, even when their builds compile.
 
-The **v0.1.1 update** adds chapter and scene drag grips, cover images in Project
-settings and supported manuscript exports, and Yes/No export wizards. Prose is
-the default focus: enable **Experimental Features** in App settings to use
-Screenplay or Interactive Fiction. Turn off **Use export wizards** to restore
-the original format lists. Story-project transfers omit covers; PDF, EPUB,
-HTML, FB2 and ODT manuscripts include them. Markdown and plain text omit images.
+The **v0.1.2 update** adds a question-driven Gemmell Wizard and encyclopedia
+discovery, plus split/merge, duplication, multi-selection, metadata, project
+search/replace, aliases, backlinks, persistent trash, and action undo/redo.
+Prose remains the default focus; enable **Experimental Features** for Screenplay
+or Interactive Fiction. The **Use Gemmell wizard** preference is independent of
+**Use export wizards**. Gemmell still uses Prompt Bridge: copy the prepared prompt
+to your chatbot and review its suggestions manually.
 
-This source version is separate from v0.1.0. The download links below remain for
-v0.1.0 until v0.1.1 artifacts are published.
+This source version is separate from v0.1.1. Published download links below remain
+unchanged until new release artifacts are published.
 See [CHANGELOG.md](CHANGELOG.md) for the changes in each version, or
 [download v0.1.0 pre-alpha](https://github.com/UniqueName54321/sutoriraita/releases/tag/v0.1.0-pre-alpha).
 
@@ -211,3 +212,33 @@ for all five platforms, CI artifacts, signing requirements and testing limits.
 
 [GitHub CI and build artifacts](https://github.com/UniqueName54321/sutoriraita/actions/workflows/build.yml)
 cover Windows, macOS, Linux, Android and unsigned iOS.
+
+## Editing features in v0.1.2
+
+- In **Write** mode, use **Formatting and scene actions → Split scene at cursor**.
+  Scene menus offer duplicate, merge with next, and scene details. Merging keeps
+  the first scene's title/metadata and puts the other original scenes in Trash.
+- Use scene checkboxes for multi-selection; Shift-click a checkbox for a range.
+  Chapter menus can select all their scenes. Use the selected-scene menu or drag
+  a selected grip to move the whole selection. **Move selected** allows an exact
+  destination chapter and position, including positions outside the current view.
+- Use **Scene details** for POV, location, date/time and status. Fictional dates
+  are free text. Metadata is retained in native projects and duplicated scenes.
+- Use **Project menu → Project search / replace** (Ctrl+Shift+F). Search is literal,
+  with optional case and whole-word matching; it covers active scene body text
+  and, by default, encyclopedia body text. Results preview matches and link to
+  their source. Titles, metadata and Trash are excluded from replacement.
+- In an encyclopedia entry's menu, edit **Aliases** or choose **Where is this
+  mentioned?** to open mentions, including aliases, in the manuscript.
+- Deleted scenes, chapters and entries go to **Project menu → Trash / restore**.
+  Trash persists across restarts and native backups. It is omitted from manuscript
+  exports and external story formats. Existing whole-project archive/delete
+  controls remain separate.
+- Use sidebar undo/redo or **Ctrl+Alt+Z / Ctrl+Alt+Y** for action history. History
+  holds the last 60 actions in the current project session, including grouped
+  typing edits; it resets when switching projects. Native editor text undo remains
+  available. Undo can recover the exact pre-merge scene structure and links.
+- With Gemmell enabled, its tools button opens the wizard. Discovery asks whether
+  to include the full manuscript or current chapter, otherwise using the scene.
+  Its prepared prompt includes scene references and known names/aliases; it does
+  not create encyclopedia entries or run an AI service automatically.

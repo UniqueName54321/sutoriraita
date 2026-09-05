@@ -3,6 +3,8 @@ import 'package:flutter/services.dart';
 
 import 'commonmark_view.dart';
 import 'gemmell.dart';
+import 'gemmell_wizard.dart';
+import 'manuscript_dialogs.dart';
 import 'genre_packs.dart';
 import 'models.dart';
 import 'project_controller.dart';
@@ -168,7 +170,7 @@ class _EncyclopediaEditorState extends State<EncyclopediaEditor> {
     super.didUpdateWidget(oldWidget);
     _reloadGemmell();
     final entry = widget.controller.selectedEntry;
-    if (entry?.id != entryId) {
+    if (entry?.id != entryId || entry?.content != textController.text) {
       entryId = entry?.id;
       textController.value = TextEditingValue(
         text: entry?.content ?? '',
@@ -251,83 +253,93 @@ class _EncyclopediaEditorState extends State<EncyclopediaEditor> {
     final tools = GemmellTool.values
         .where((tool) => tool.encyclopediaOnly)
         .toList();
-    final tool = await showDialog<GemmellTool>(
-      context: context,
-      builder: (dialogContext) => Dialog(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 680, maxHeight: 680),
-          child: Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(24, 18, 10, 12),
-                child: Row(
+    final tool = gemmell.useWizard
+        ? await showGemmellWizard(context, tools, gemmell.name)
+        : await showDialog<GemmellTool>(
+            context: context,
+            builder: (dialogContext) => Dialog(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(
+                  maxWidth: 680,
+                  maxHeight: 680,
+                ),
+                child: Column(
                   children: [
-                    const Icon(Icons.auto_awesome, color: Color(0xFF668071)),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(24, 18, 10, 12),
+                      child: Row(
                         children: [
-                          Text(
-                            '${gemmell.name} · Encyclopedia tools',
-                            style: Theme.of(context).textTheme.titleLarge,
+                          const Icon(
+                            Icons.auto_awesome,
+                            color: Color(0xFF668071),
                           ),
-                          Text(
-                            '${entry.type.label}: ${entry.title}',
-                            style: const TextStyle(color: Color(0xFF777368)),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  '${gemmell.name} · Encyclopedia tools',
+                                  style: Theme.of(context).textTheme.titleLarge,
+                                ),
+                                Text(
+                                  '${entry.type.label}: ${entry.title}',
+                                  style: const TextStyle(
+                                    color: Color(0xFF777368),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          IconButton(
+                            onPressed: () => Navigator.pop(dialogContext),
+                            icon: const Icon(Icons.close),
                           ),
                         ],
                       ),
                     ),
-                    IconButton(
-                      onPressed: () => Navigator.pop(dialogContext),
-                      icon: const Icon(Icons.close),
+                    const Divider(height: 1),
+                    Expanded(
+                      child: ListView.separated(
+                        padding: const EdgeInsets.all(16),
+                        itemCount: tools.length,
+                        separatorBuilder: (_, _) => const SizedBox(height: 8),
+                        itemBuilder: (context, index) {
+                          final tool = tools[index];
+                          return Card(
+                            margin: EdgeInsets.zero,
+                            child: ListTile(
+                              contentPadding: const EdgeInsets.all(14),
+                              leading: const Icon(Icons.auto_awesome_outlined),
+                              title: Text(tool.label),
+                              subtitle: Padding(
+                                padding: const EdgeInsets.only(top: 5),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(tool.instruction),
+                                    const SizedBox(height: 5),
+                                    Text(
+                                      tool.example,
+                                      style: const TextStyle(
+                                        fontStyle: FontStyle.italic,
+                                        color: Color(0xFF777368),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              onTap: () => Navigator.pop(dialogContext, tool),
+                            ),
+                          );
+                        },
+                      ),
                     ),
                   ],
                 ),
               ),
-              const Divider(height: 1),
-              Expanded(
-                child: ListView.separated(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: tools.length,
-                  separatorBuilder: (_, _) => const SizedBox(height: 8),
-                  itemBuilder: (context, index) {
-                    final tool = tools[index];
-                    return Card(
-                      margin: EdgeInsets.zero,
-                      child: ListTile(
-                        contentPadding: const EdgeInsets.all(14),
-                        leading: const Icon(Icons.auto_awesome_outlined),
-                        title: Text(tool.label),
-                        subtitle: Padding(
-                          padding: const EdgeInsets.only(top: 5),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(tool.instruction),
-                              const SizedBox(height: 5),
-                              Text(
-                                tool.example,
-                                style: const TextStyle(
-                                  fontStyle: FontStyle.italic,
-                                  color: Color(0xFF777368),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        onTap: () => Navigator.pop(dialogContext, tool),
-                      ),
-                    );
-                  },
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
+            ),
+          );
     if (tool == null) return;
     gemmell = await GemmellSettings.load();
     if (!gemmell.enabled) return;
@@ -570,7 +582,21 @@ class _EncyclopediaEditorState extends State<EncyclopediaEditor> {
                     ),
                   PopupMenuButton<String>(
                     onSelected: (value) async {
-                      if (value == 'edit') {
+                      if (value == 'aliases') {
+                        await showEntryAliases(
+                          context,
+                          widget.controller,
+                          entry,
+                        );
+                      }
+                      if (value == 'backlinks' && context.mounted) {
+                        await showEntryBacklinks(
+                          context,
+                          widget.controller,
+                          entry,
+                        );
+                      }
+                      if (value == 'edit' && context.mounted) {
                         final result = await _entryDialog(
                           context,
                           entry: entry,
@@ -598,6 +624,14 @@ class _EncyclopediaEditorState extends State<EncyclopediaEditor> {
                         value: 'edit',
                         child: Text('Edit title and type'),
                       ),
+                      const PopupMenuItem(
+                        value: 'aliases',
+                        child: Text('Aliases…'),
+                      ),
+                      const PopupMenuItem(
+                        value: 'backlinks',
+                        child: Text('Where is this mentioned?'),
+                      ),
                       const PopupMenuDivider(),
                       const PopupMenuItem(
                         value: 'generate-base',
@@ -619,7 +653,7 @@ class _EncyclopediaEditorState extends State<EncyclopediaEditor> {
                       const PopupMenuDivider(),
                       const PopupMenuItem(
                         value: 'delete',
-                        child: Text('Delete entry'),
+                        child: Text('Move entry to Trash'),
                       ),
                     ],
                   ),

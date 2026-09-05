@@ -142,7 +142,7 @@ class EntityDetector {
       }
     }
     final existing = project.encyclopedia
-        .expand((entry) => _aliases(entry.title))
+        .expand((entry) => [entry.title, ...entry.aliases].expand(_aliases))
         .toSet();
     final suggestions = <EntitySuggestion>[];
     for (final candidate in detected) {

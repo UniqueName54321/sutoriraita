@@ -17,6 +17,8 @@ import 'commonmark_view.dart';
 import 'document_exporter.dart';
 import 'encyclopedia_view.dart';
 import 'gemmell.dart';
+import 'gemmell_wizard.dart';
+import 'manuscript_dialogs.dart';
 import 'genre_packs.dart';
 import 'internal_links.dart';
 import 'models.dart';
@@ -571,7 +573,7 @@ class WelcomeScreen extends StatelessWidget {
                         _ProjectLibrary(controller: controller),
                         const SizedBox(height: 46),
                         const Text(
-                          'VERSION 0.1.1  •  PRE-ALPHA',
+                          'VERSION 0.1.2  •  PRE-ALPHA',
                           style: TextStyle(
                             fontFamily: 'Segoe UI',
                             fontSize: 11,
@@ -895,11 +897,38 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
     return Shortcuts(
       shortcuts: const {
         SingleActivator(LogicalKeyboardKey.keyS, control: true): _SaveIntent(),
+        SingleActivator(LogicalKeyboardKey.keyZ, control: true, alt: true):
+            _UndoActionIntent(),
+        SingleActivator(LogicalKeyboardKey.keyY, control: true, alt: true):
+            _RedoActionIntent(),
+        SingleActivator(LogicalKeyboardKey.keyF, control: true, shift: true):
+            _ProjectSearchIntent(),
         SingleActivator(LogicalKeyboardKey.keyN, control: true, shift: true):
             _NewSceneIntent(),
       },
       child: Actions(
         actions: {
+          _UndoActionIntent: CallbackAction<_UndoActionIntent>(
+            onInvoke: (_) {
+              widget.controller.undo();
+              return null;
+            },
+          ),
+          _RedoActionIntent: CallbackAction<_RedoActionIntent>(
+            onInvoke: (_) {
+              widget.controller.redo();
+              return null;
+            },
+          ),
+          _ProjectSearchIntent: CallbackAction<_ProjectSearchIntent>(
+            onInvoke: (_) {
+              if (widget.controller.projectEnabled &&
+                  widget.controller.project!.type == ProjectType.prose) {
+                showManuscriptSearch(context, widget.controller);
+              }
+              return null;
+            },
+          ),
           _SaveIntent: CallbackAction<_SaveIntent>(
             onInvoke: (_) {
               widget.controller.saveNow();
@@ -909,6 +938,11 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
           _NewSceneIntent: CallbackAction<_NewSceneIntent>(
             onInvoke: (_) {
               final c = widget.controller;
+              if (!c.projectEnabled) return null;
+              if (c.project!.sections.isEmpty) {
+                c.addSection();
+                return null;
+              }
               final section = c.selectedScene == null
                   ? c.project!.sections.first
                   : c.sectionFor(c.selectedScene!)!;
@@ -1030,6 +1064,27 @@ class WorkspaceTopBar extends StatelessWidget {
               value: 'app-settings',
               child: _MenuLabel(Icons.settings_outlined, 'App settings'),
             ),
+            if (controller.projectEnabled) ...[
+              PopupMenuItem(
+                value: 'undo',
+                enabled: controller.canUndo,
+                child: Text('${controller.undoLabel} (Ctrl+Alt+Z)'),
+              ),
+              PopupMenuItem(
+                value: 'redo',
+                enabled: controller.canRedo,
+                child: Text('${controller.redoLabel} (Ctrl+Alt+Y)'),
+              ),
+              if (controller.project!.type == ProjectType.prose)
+                const PopupMenuItem(
+                  value: 'search',
+                  child: Text('Project search / replace…'),
+                ),
+              const PopupMenuItem(
+                value: 'trash',
+                child: Text('Trash / restore…'),
+              ),
+            ],
             const PopupMenuDivider(),
             if (controller.projectEnabled &&
                 controller.project!.type != ProjectType.interactiveFiction &&
@@ -1132,6 +1187,18 @@ class ManuscriptSidebar extends StatelessWidget {
                     ),
                   ),
                   IconButton(
+                    onPressed: controller.canUndo ? controller.undo : null,
+                    tooltip: '${controller.undoLabel} (Ctrl+Alt+Z)',
+                    visualDensity: VisualDensity.compact,
+                    icon: const Icon(Icons.undo, size: 19),
+                  ),
+                  IconButton(
+                    onPressed: controller.canRedo ? controller.redo : null,
+                    tooltip: '${controller.redoLabel} (Ctrl+Alt+Y)',
+                    visualDensity: VisualDensity.compact,
+                    icon: const Icon(Icons.redo, size: 19),
+                  ),
+                  IconButton(
                     onPressed: controller.addSection,
                     tooltip: 'New chapter',
                     visualDensity: VisualDensity.compact,
@@ -1143,6 +1210,61 @@ class ManuscriptSidebar extends StatelessWidget {
                 ],
               ),
             ),
+            if (controller.selectedSceneIds.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        '${controller.selectedSceneIds.length} selected',
+                      ),
+                    ),
+                    PopupMenuButton<String>(
+                      tooltip: 'Selected scene actions',
+                      icon: const Icon(Icons.more_horiz),
+                      onSelected: (action) async {
+                        final scenes = controller.selectedScenes;
+                        if (action == 'move') {
+                          await showMoveScenes(context, controller, scenes);
+                        }
+                        if (action == 'merge' && context.mounted) {
+                          await confirmMergeScenes(context, controller, scenes);
+                        }
+                        if (action == 'duplicate') {
+                          controller.duplicateScenes(scenes);
+                        }
+                        if (action == 'trash') controller.trashScenes(scenes);
+                      },
+                      itemBuilder: (_) => [
+                        const PopupMenuItem(
+                          value: 'move',
+                          child: Text('Move selected…'),
+                        ),
+                        if (controller.project!.type == ProjectType.prose &&
+                            controller.selectedScenes.length > 1)
+                          const PopupMenuItem(
+                            value: 'merge',
+                            child: Text('Merge selected…'),
+                          ),
+                        const PopupMenuItem(
+                          value: 'duplicate',
+                          child: Text('Duplicate selected'),
+                        ),
+                        const PopupMenuItem(
+                          value: 'trash',
+                          child: Text('Move selected to Trash'),
+                        ),
+                      ],
+                    ),
+                    IconButton(
+                      tooltip: 'Clear selection',
+                      onPressed: controller.clearSceneSelection,
+                      icon: const Icon(Icons.clear),
+                    ),
+                  ],
+                ),
+              ),
             Expanded(
               child: ListView(
                 padding: const EdgeInsets.fromLTRB(8, 0, 8, 18),
@@ -1244,6 +1366,8 @@ class SectionTile extends StatelessWidget {
         padding: EdgeInsets.zero,
         onSelected: (value) async {
           if (value == 'add') controller.addScene(section);
+          if (value == 'duplicate') controller.duplicateChapter(section);
+          if (value == 'select') controller.selectChapterScenes(section);
           if (value == 'rename') {
             final name = await _textDialog(
               context,
@@ -1252,20 +1376,14 @@ class SectionTile extends StatelessWidget {
             );
             if (name != null) controller.renameSection(section, name);
           }
-          if (value == 'delete' &&
-              controller.project!.sections.length > 1 &&
-              context.mounted &&
-              await _confirm(
-                context,
-                'Delete “${section.title}” and its scenes?',
-              )) {
-            controller.deleteSection(section);
-          }
+          if (value == 'delete') controller.deleteSection(section);
         },
         itemBuilder: (_) => const [
           PopupMenuItem(value: 'add', child: Text('Add scene')),
           PopupMenuItem(value: 'rename', child: Text('Rename')),
-          PopupMenuItem(value: 'delete', child: Text('Delete chapter')),
+          PopupMenuItem(value: 'duplicate', child: Text('Duplicate chapter')),
+          PopupMenuItem(value: 'select', child: Text('Select chapter scenes')),
+          PopupMenuItem(value: 'delete', child: Text('Move chapter to Trash')),
         ],
       ),
       children: [
@@ -1293,10 +1411,46 @@ class SectionTile extends StatelessWidget {
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      leading: StoryDragGrip<StoryScene>(
-                        data: scene,
-                        label: 'Drag scene ${scene.title}',
+                      leading: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          SizedBox(
+                            width: 26,
+                            child: Checkbox(
+                              value: controller.selectedSceneIds.contains(
+                                scene.id,
+                              ),
+                              onChanged: (_) => controller.toggleSceneSelection(
+                                scene,
+                                range: HardwareKeyboard.instance.isShiftPressed,
+                              ),
+                            ),
+                          ),
+                          StoryDragGrip<StoryScene>(
+                            data: scene,
+                            label:
+                                controller.selectedSceneIds.contains(scene.id)
+                                ? 'Drag ${controller.selectedSceneIds.length} selected scenes'
+                                : 'Drag scene ${scene.title}',
+                          ),
+                        ],
                       ),
+                      subtitle:
+                          scene.pov.isNotEmpty ||
+                              scene.location.isNotEmpty ||
+                              scene.storyDate.isNotEmpty ||
+                              scene.status != 'Draft'
+                          ? Text(
+                              [
+                                scene.pov,
+                                scene.location,
+                                scene.storyDate,
+                                scene.status,
+                              ].where((s) => s.isNotEmpty).join(' · '),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            )
+                          : null,
                       title: Text(
                         scene.title,
                         maxLines: 1,
@@ -1319,10 +1473,37 @@ class SectionTile extends StatelessWidget {
                           scene,
                           value,
                         ),
-                        itemBuilder: (_) => const [
-                          PopupMenuItem(value: 'rename', child: Text('Rename')),
-                          PopupMenuItem(value: 'move', child: Text('Move to…')),
-                          PopupMenuItem(value: 'delete', child: Text('Delete')),
+                        itemBuilder: (_) => [
+                          const PopupMenuItem(
+                            value: 'rename',
+                            child: Text('Rename'),
+                          ),
+                          const PopupMenuItem(
+                            value: 'move',
+                            child: Text('Move to…'),
+                          ),
+                          const PopupMenuItem(
+                            value: 'duplicate',
+                            child: Text('Duplicate scene'),
+                          ),
+                          const PopupMenuItem(
+                            value: 'metadata',
+                            child: Text('Scene details…'),
+                          ),
+                          if (controller.project!.type == ProjectType.prose &&
+                              controller.allScenes.last != scene)
+                            const PopupMenuItem(
+                              value: 'merge-next',
+                              child: Text('Merge with next scene…'),
+                            ),
+                          const PopupMenuItem(
+                            value: 'select',
+                            child: Text('Select / deselect'),
+                          ),
+                          const PopupMenuItem(
+                            value: 'delete',
+                            child: Text('Move to Trash'),
+                          ),
                         ],
                       ),
                       onTap: () {
@@ -1379,6 +1560,15 @@ class _SceneEditorState extends State<SceneEditor> {
     textController = TextEditingController(
       text: widget.controller.selectedScene?.content ?? '',
     )..addListener(_changed);
+    final requested = widget.controller.requestedSceneRange;
+    if (requested != null) {
+      preview = false;
+      widget.controller.requestedSceneRange = null;
+      textController.selection = TextSelection(
+        baseOffset: requested.start.clamp(0, textController.text.length),
+        extentOffset: requested.end.clamp(0, textController.text.length),
+      );
+    }
     _reloadGemmell();
   }
 
@@ -1393,11 +1583,22 @@ class _SceneEditorState extends State<SceneEditor> {
     super.didUpdateWidget(oldWidget);
     _reloadGemmell();
     final scene = widget.controller.selectedScene;
-    if (scene?.id != sceneId) {
+    final requested = widget.controller.requestedSceneRange;
+    if (scene?.id != sceneId ||
+        scene?.content != textController.text ||
+        requested != null) {
       sceneId = scene?.id;
+      widget.controller.requestedSceneRange = null;
+      if (requested != null) preview = false;
+      final text = scene?.content ?? '';
       textController.value = TextEditingValue(
-        text: scene?.content ?? '',
-        selection: TextSelection.collapsed(offset: scene?.content.length ?? 0),
+        text: text,
+        selection: requested == null
+            ? TextSelection.collapsed(offset: text.length)
+            : TextSelection(
+                baseOffset: requested.start.clamp(0, text.length),
+                extentOffset: requested.end.clamp(0, text.length),
+              ),
       );
     }
   }
@@ -1515,8 +1716,14 @@ class _SceneEditorState extends State<SceneEditor> {
   }) async {
     gemmell = await GemmellSettings.load();
     if (!gemmell.enabled) return;
+    if (!mounted) return;
     final project = widget.controller.project!;
     String? packagePath;
+    DiscoveryScope? discoveryScope;
+    if (tool == GemmellTool.discoverEncyclopediaEntries) {
+      discoveryScope = await chooseDiscoveryScope(context);
+      if (discoveryScope == null) return;
+    }
     if (tool.requiresPackage) {
       try {
         packagePath = await widget.controller.store.exportPackage(project);
@@ -1528,7 +1735,10 @@ class _SceneEditorState extends State<SceneEditor> {
       tool: tool,
       project: project.title,
       scene: scene.title,
-      text: textController.text,
+      text: discoveryScope == null
+          ? textController.text
+          : discoveryMaterial(project, scene, discoveryScope),
+      subjectKind: discoveryScope == null ? 'Scene' : discoveryScope.name,
       selection: selection,
       encyclopedia: gemmellEncyclopediaContext(project),
       transformationOptions: transformationOptions,
@@ -1596,6 +1806,9 @@ class _SceneEditorState extends State<SceneEditor> {
               (!tool.proseTransformation || gemmell.proseTransformationEnabled),
         )
         .toList();
+    if (gemmell.useWizard) {
+      return showGemmellWizard(context, tools, gemmell.name);
+    }
     return showDialog<GemmellTool>(
       context: context,
       builder: (dialogContext) => Dialog(
@@ -1800,6 +2013,17 @@ class _SceneEditorState extends State<SceneEditor> {
             ? selection.textInside(textController.text)
             : '';
         _insert('[${label.isEmpty ? 'link text' : label}](https://)');
+      case 'split':
+        try {
+          widget.controller.splitScene(
+            scene,
+            textController.selection.extentOffset,
+          );
+        } catch (error) {
+          if (mounted) _showError(context, error);
+        }
+      case 'metadata':
+        await showSceneMetadata(context, widget.controller, scene);
       case 'scene-link':
         await _insertSceneLink(scene);
       case 'rule':
@@ -1809,10 +2033,13 @@ class _SceneEditorState extends State<SceneEditor> {
 
   Widget _commonMarkMenu(StoryScene scene) => PopupMenuButton<String>(
     enabled: !preview,
-    tooltip: 'More CommonMark',
+    tooltip: 'Formatting and scene actions',
     icon: const Icon(Icons.add_box_outlined, size: 19),
     onSelected: (value) => _commonMarkAction(value, scene),
     itemBuilder: (_) => const [
+      PopupMenuItem(value: 'split', child: Text('Split scene at cursor')),
+      PopupMenuItem(value: 'metadata', child: Text('Scene details…')),
+      PopupMenuDivider(),
       PopupMenuItem(value: 'heading', child: Text('Heading')),
       PopupMenuItem(value: 'quote', child: Text('Block quote')),
       PopupMenuItem(value: 'list', child: Text('Bulleted list')),
@@ -2515,6 +2742,15 @@ class _AppSettingsDialogState extends State<AppSettingsDialog> {
                 if (!value) gemmell.proseTransformationEnabled = false;
               }),
             ),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('Use Gemmell wizard'),
+              subtitle: const Text(
+                'Find a tool through questions. Turn off for the original Gemmell tool lists. Independent of export wizards.',
+              ),
+              value: gemmell.useWizard,
+              onChanged: (value) => setState(() => gemmell.useWizard = value),
+            ),
             if (gemmell.enabled) ...[
               const SizedBox(height: 8),
               const Align(
@@ -3024,32 +3260,31 @@ Future<void> _sceneAction(
   StoryScene scene,
   String value,
 ) async {
-  if (value == 'rename') {
+  if (value == 'duplicate') controller.duplicateScene(scene);
+  if (value == 'metadata') await showSceneMetadata(context, controller, scene);
+  if (value == 'select') controller.toggleSceneSelection(scene);
+  if (value == 'merge-next' &&
+      context.mounted &&
+      controller.project!.type == ProjectType.prose) {
+    final scenes = controller.allScenes,
+        index = controller.allScenes.indexOf(scene);
+    if (index + 1 < scenes.length) {
+      await confirmMergeScenes(context, controller, [scene, scenes[index + 1]]);
+    }
+  }
+  if (value == 'rename' && context.mounted) {
     final name = await _textDialog(context, 'Rename scene', scene.title);
     if (name != null) controller.renameScene(scene, name);
-  } else if (value == 'delete') {
-    if (context.mounted &&
-        await _confirm(context, 'Delete “${scene.title}”?')) {
-      controller.deleteScene(scene);
-    }
-  } else if (value == 'move') {
-    if (!context.mounted) return;
-    final destination = await showDialog<StorySection>(
-      context: context,
-      builder: (dialogContext) => SimpleDialog(
-        title: const Text('Move scene to'),
-        children: controller.project!.sections
-            .where((item) => item != section)
-            .map(
-              (item) => SimpleDialogOption(
-                onPressed: () => Navigator.pop(dialogContext, item),
-                child: Text(item.title),
-              ),
-            )
-            .toList(),
-      ),
+  }
+  if (value == 'delete') controller.deleteScene(scene);
+  if (value == 'move' && context.mounted) {
+    await showMoveScenes(
+      context,
+      controller,
+      controller.selectedSceneIds.contains(scene.id)
+          ? controller.selectedScenes
+          : [scene],
     );
-    if (destination != null) controller.moveScene(scene, destination);
   }
 }
 
@@ -3085,6 +3320,22 @@ Future<void> _projectAction(
     }
     if ((value == 'package' || value == 'document-export') &&
         !controller.projectEnabled) {
+      return;
+    }
+    if (value == 'undo') {
+      controller.undo();
+      return;
+    }
+    if (value == 'redo') {
+      controller.redo();
+      return;
+    }
+    if (value == 'search') {
+      await showManuscriptSearch(context, controller);
+      return;
+    }
+    if (value == 'trash') {
+      await showManuscriptTrash(context, controller);
       return;
     }
     if (value == 'package') {
@@ -3388,6 +3639,18 @@ class _StrongConfirmationDialogState extends State<_StrongConfirmationDialog> {
 void _showError(BuildContext context, Object error) {
   final message = error is FormatException ? error.message : error.toString();
   ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+}
+
+class _UndoActionIntent extends Intent {
+  const _UndoActionIntent();
+}
+
+class _RedoActionIntent extends Intent {
+  const _RedoActionIntent();
+}
+
+class _ProjectSearchIntent extends Intent {
+  const _ProjectSearchIntent();
 }
 
 class _SaveIntent extends Intent {

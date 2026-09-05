@@ -1,4 +1,4 @@
-# Building and releasing v0.1.1 pre-alpha
+# Building and releasing v0.1.2 pre-alpha
 
 Use Flutter **3.47.2 stable**, Dart **3.13.2** (bundled), and the committed
 `pubspec.lock`. Run `flutter doctor -v`, `flutter pub get`, `flutter analyze`,
@@ -62,7 +62,7 @@ unverified. A production release requires completing those checks on supported
 platforms. No workflow auto-publishes a production release. Keep `pubspec.yaml`,
 README, CHANGELOG and the in-app version label aligned. Every distinct update gets
 a new application version and a monotonically increasing build number. The current
-release is `0.1.1+6` / `v0.1.1-pre-alpha`; retain all earlier tags including v0.1.0,
+release is `0.1.2+7` / `v0.1.2-pre-alpha`; retain all earlier tags and releases,
 notes and downloads unchanged. Project `formatVersion` is independent of the app
 version and remains **1**; this update needs no native data migration.
 
@@ -225,3 +225,16 @@ artifact checksums before publishing the pre-release.
   `sutoriraita-v0.1.1-pre-alpha-windows.zip`. No release was published.
 - Final `flutter analyze --no-pub` passed; all nine v0.1.1 regression tests
   passed again after the final ODT cover-layout adjustment.
+
+## v0.1.2 local verification (2026-09-05)
+
+- `flutter analyze --no-pub`: no issues.
+- `flutter test --no-pub --concurrency=1`: 83 passed, one optional external
+  Hammer-fixture test skipped because its fixture directory was not configured.
+- 23 new regression checks cover Gemmell routing/preferences/scopes, alias-aware
+  discovery and backlinks, exact split/merge undo/redo, duplication/link remapping,
+  range movement, metadata and trash persistence, restoration order, relationship
+  restoration, literal project replacement and small-screen dialogs.
+- Windows packaging uses a separate checkout because the existing main-checkout
+  executable is running. Native OS picker interaction and other platform builds
+  have not been interactively verified for this version.

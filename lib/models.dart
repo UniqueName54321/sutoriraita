@@ -215,6 +215,7 @@ class StoryProject {
     required this.sections,
     this.type = ProjectType.prose,
     this.coverImage,
+    List<Map<String, Object?>>? trash,
     Map<String, List<ScreenplayElement>>? screenplay,
     SohoIr? interactiveFiction,
     List<EncyclopediaEntry>? encyclopedia,
@@ -224,7 +225,8 @@ class StoryProject {
     this.encyclopediaSchemaVersion = currentEncyclopediaSchemaVersion,
     List<EntryRelation>? relations,
     this.path,
-  }) : screenplay = screenplay ?? {},
+  }) : trash = trash ?? [],
+       screenplay = screenplay ?? {},
        interactiveFiction = interactiveFiction ?? SohoIr(),
        encyclopedia = encyclopedia ?? [],
        genres = genres ?? [],
@@ -241,6 +243,7 @@ class StoryProject {
   String? path;
   final List<StorySection> sections;
   String? coverImage;
+  final List<Map<String, Object?>> trash;
   final ProjectType type;
   final Map<String, List<ScreenplayElement>> screenplay;
   final SohoIr interactiveFiction;
@@ -264,6 +267,7 @@ class StoryProject {
     'language': language,
     'projectType': type.key,
     if (coverImage != null) 'coverImage': coverImage,
+    'trash': trash,
     'createdAt': createdAt.toUtc().toIso8601String(),
     'updatedAt': updatedAt.toUtc().toIso8601String(),
     'sections': sections.map((section) => section.toJson()).toList(),
@@ -295,6 +299,9 @@ class StoryProject {
       language: _normaliseLanguage(json['language'] as String? ?? 'en'),
       type: ProjectType.fromKey(json['projectType'] as String?),
       coverImage: json['coverImage'] as String?,
+      trash: (json['trash'] as List? ?? [])
+          .map((item) => (item as Map).cast<String, Object?>())
+          .toList(),
       createdAt:
           DateTime.tryParse(json['createdAt'] as String? ?? '') ??
           DateTime.now(),
@@ -411,8 +418,10 @@ class EncyclopediaEntry {
     required this.content,
     required this.updatedAt,
     this.subtype,
+    List<String>? aliases,
     Map<String, String>? fields,
-  }) : fields = fields ?? {};
+  }) : aliases = aliases ?? [],
+       fields = fields ?? {};
 
   final String id;
   String title;
@@ -420,6 +429,7 @@ class EncyclopediaEntry {
   String content;
   DateTime updatedAt;
   String? subtype;
+  final List<String> aliases;
   final Map<String, String> fields;
 
   Map<String, Object?> toJson() => {
@@ -430,6 +440,7 @@ class EncyclopediaEntry {
     'updatedAt': updatedAt.toUtc().toIso8601String(),
     if (subtype != null) 'subtype': subtype,
     'fields': fields,
+    'aliases': aliases,
   };
 
   factory EncyclopediaEntry.fromJson(Map<String, Object?> json) =>
@@ -442,6 +453,7 @@ class EncyclopediaEntry {
             DateTime.tryParse(json['updatedAt'] as String? ?? '') ??
             DateTime.now(),
         subtype: json['subtype'] as String?,
+        aliases: (json['aliases'] as List? ?? []).cast<String>(),
         fields: (json['fields'] as Map? ?? const {}).map(
           (key, value) => MapEntry('$key', '$value'),
         ),
@@ -742,12 +754,17 @@ class StoryScene {
     required this.title,
     required this.content,
     required this.updatedAt,
+    this.pov = '',
+    this.location = '',
+    this.storyDate = '',
+    this.status = 'Draft',
   });
 
   final String id;
   String title;
   String content;
   DateTime updatedAt;
+  String pov, location, storyDate, status;
 
   int get wordCount {
     final clean = content.trim();
@@ -758,6 +775,10 @@ class StoryScene {
     'id': id,
     'title': title,
     'file': 'scenes/$id.md',
+    'pov': pov,
+    'location': location,
+    'storyDate': storyDate,
+    'status': status,
     'updatedAt': updatedAt.toUtc().toIso8601String(),
   };
 
@@ -768,6 +789,10 @@ class StoryScene {
     id: json['id'] as String,
     title: json['title'] as String? ?? 'Untitled scene',
     content: content,
+    pov: json['pov'] as String? ?? '',
+    location: json['location'] as String? ?? '',
+    storyDate: json['storyDate'] as String? ?? '',
+    status: json['status'] as String? ?? 'Draft',
     updatedAt:
         DateTime.tryParse(json['updatedAt'] as String? ?? '') ?? DateTime.now(),
   );
